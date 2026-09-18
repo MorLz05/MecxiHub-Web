@@ -89,38 +89,32 @@ class FirebaseServiceProvider extends ServiceProvider
     {
         $value = env('FIREBASE_CREDENTIALS');
 
-        // DEBUG TEMPORAL
-        Log::info('FIREBASE_CREDENTIALS debug', [
-            'es_null'    => is_null($value),
-            'es_string'  => is_string($value),
-            'longitud'   => is_string($value) ? strlen($value) : null,
-            'preview'    => is_string($value) ? substr($value, 0, 100) : null,
-        ]);
-
         if (empty($value)) {
-            throw new \Exception('FIREBASE_CREDENTIALS no está configurada');
+            throw new \Exception('FIREBASE_CREDENTIALS está vacía o no está configurada en el entorno.');
         }
 
-        // -------------------------------------------------
-        // CASO 1: es la ruta a un archivo existente (LOCAL)
-        // -------------------------------------------------
+        // Caso 1: es una ruta de archivo que existe (local)
         if (is_string($value) && file_exists($value)) {
             return $value;
         }
 
-        // -------------------------------------------------
-        // CASO 2: es el JSON completo en texto (CLOUD)
-        // -------------------------------------------------
+        // Caso 2: es un JSON completo (Cloud o local)
         if (is_string($value)) {
-            $decoded = json_decode($value, true);
+            // Limpiar posibles comillas externas sobrantes
+            $clean = trim($value, " \t\n\r\0\x0B\"'");
+
+            $decoded = json_decode($clean, true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 return $decoded;
             }
+
+            // Guardar el error para el throw
+            $jsonError = json_last_error_msg();
+        } else {
+            $jsonError = 'valor no es string';
         }
 
-        // -------------------------------------------------
-        // CASO 3: buscar el archivo en rutas típicas (LOCAL)
-        // -------------------------------------------------
+        // Caso 3: buscar en rutas típicas (local)
         if (is_string($value)) {
             $possiblePaths = [
                 storage_path('app/' . $value),
@@ -129,7 +123,6 @@ class FirebaseServiceProvider extends ServiceProvider
                 base_path('storage/app/' . $value),
                 base_path('storage/app/firebase-credentials.json'),
             ];
-
             foreach ($possiblePaths as $path) {
                 if (file_exists($path)) {
                     return $path;
@@ -137,9 +130,13 @@ class FirebaseServiceProvider extends ServiceProvider
             }
         }
 
+        // Error detallado
+        $preview = is_string($value) ? substr($value, 0, 150) : gettype($value);
         throw new \Exception(
-            'No se pudo resolver FIREBASE_CREDENTIALS. ' .
-                'Debe ser una ruta de archivo válida o un JSON válido.'
+            "No se pudo resolver FIREBASE_CREDENTIALS. " .
+                "Longitud: " . (is_string($value) ? strlen($value) : 'n/a') . ". " .
+                "JSON error: {$jsonError}. " .
+                "Preview: {$preview}"
         );
     }
 }
