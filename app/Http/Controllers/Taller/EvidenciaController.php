@@ -5,17 +5,25 @@ namespace App\Http\Controllers\Taller;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Contract\Storage;
 use Illuminate\Support\Str;
 use Kreait\Firebase\Factory;
 use Google\Cloud\Firestore\FirestoreClient;
 
 class EvidenciaController extends Controller
 {
-    protected $firestoreDb;
-    protected $storage;
-    protected $bucketName;
+    protected FirestoreClient $firestoreDb;
+    protected Storage $storage;
+    protected string $bucketName;
 
-    public function __construct()
+    public function __construct(FirestoreClient $firestoreDb, Storage $storage)
+    {
+        $this->firestoreDb = $firestoreDb;
+        $this->storage = $storage;
+        $this->bucketName = env('FIREBASE_STORAGE_BUCKET', 'mecxihub-db.firebasestorage.app');
+    }
+
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -59,7 +67,7 @@ class EvidenciaController extends Controller
             $this->storage = null;
             $this->bucketName = null;
         }
-    }
+    } */
 
     private function obtenerTallerIdDelUsuario()
     {

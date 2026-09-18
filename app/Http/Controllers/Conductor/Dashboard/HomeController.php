@@ -11,7 +11,12 @@ class HomeController extends Controller
 {
     protected $firestoreDb;
 
-    public function __construct()
+    public function __construct(FirestoreClient $firestoreDb)
+    {
+        $this->firestoreDb = $firestoreDb;
+    }
+
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -47,7 +52,7 @@ class HomeController extends Controller
             Log::error('Error inicializando HomeController: ' . $e->getMessage());
             $this->firestoreDb = null;
         }
-    }
+    } */
 
     /**
      * Página principal del conductor
@@ -188,7 +193,8 @@ class HomeController extends Controller
                                         }
                                     }
                                 }
-                            } catch (\Exception $e) {}
+                            } catch (\Exception $e) {
+                            }
                         }
 
                         if ($count > 0) {
@@ -220,8 +226,10 @@ class HomeController extends Controller
                     && !empty($data['latitud']) && !empty($data['longitud'])
                 ) {
                     $data['distancia_km'] = round($this->haversine(
-                        $userLat, $userLng,
-                        (float) $data['latitud'], (float) $data['longitud']
+                        $userLat,
+                        $userLng,
+                        (float) $data['latitud'],
+                        (float) $data['longitud']
                     ), 1);
                 }
 

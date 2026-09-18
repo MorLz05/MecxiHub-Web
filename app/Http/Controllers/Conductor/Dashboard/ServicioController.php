@@ -11,7 +11,12 @@ class ServicioController extends Controller
 {
     protected $firestoreDb;
 
-    public function __construct()
+    public function __construct(FirestoreClient $firestoreDb)
+    {
+        $this->firestoreDb = $firestoreDb;
+    }
+
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -41,7 +46,7 @@ class ServicioController extends Controller
         } catch (\Exception $e) {
             Log::error('ServicioController init: ' . $e->getMessage());
         }
-    }
+    } */
 
     /**
      * Lista todos los servicios (órdenes) del conductor actual.

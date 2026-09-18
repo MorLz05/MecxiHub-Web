@@ -12,7 +12,12 @@ class ComentarioController extends Controller
 {
     protected $firestoreDb;
 
-    public function __construct()
+    public function __construct(FirestoreClient $firestoreDb)
+    {
+        $this->firestoreDb = $firestoreDb;
+    }
+    
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -48,7 +53,7 @@ class ComentarioController extends Controller
             Log::error('Error inicializando ComentarioController: ' . $e->getMessage());
             $this->firestoreDb = null;
         }
-    }
+    } */
 
     /**
      * Lista todas las reseñas del taller con estadísticas.

@@ -5,15 +5,22 @@ namespace App\Http\Controllers\Taller;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Contract\Auth;
 use Google\Cloud\Firestore\FirestoreClient;
 use Kreait\Firebase\Exception\Auth\UserNotFound;
 
 class SeguridadController extends Controller
 {
-    protected $auth;
-    protected $firestoreDb;
+    protected Auth $auth;
+    protected FirestoreClient $firestoreDb;
 
-    public function __construct()
+    public function __construct(Auth $auth, FirestoreClient $firestoreDb)
+    {
+        $this->auth = $auth;
+        $this->firestoreDb = $firestoreDb;
+    }
+
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -56,7 +63,7 @@ class SeguridadController extends Controller
             $this->firestoreDb = null;
             $this->auth = null;
         }
-    }
+    } */
 
     public function index()
     {
@@ -133,7 +140,6 @@ class SeguridadController extends Controller
             return redirect()
                 ->route('login')
                 ->with('success', 'Correo electrónico actualizado exitosamente. Por favor, inicia sesión con tu nueva dirección de correo.');
-
         } catch (\Exception $e) {
             Log::error('Error actualizando email: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Error al actualizar el correo: ' . $e->getMessage()]);
@@ -225,7 +231,6 @@ class SeguridadController extends Controller
             return redirect()
                 ->route('login')
                 ->with('success', 'Contraseña actualizada exitosamente. Por favor, inicia sesión con tu nueva contraseña.');
-
         } catch (\Exception $e) {
             Log::error('Error actualizando contraseña: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Error al actualizar la contraseña: ' . $e->getMessage()]);

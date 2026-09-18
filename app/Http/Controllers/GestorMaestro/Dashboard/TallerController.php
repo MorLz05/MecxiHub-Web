@@ -4,6 +4,7 @@ namespace App\Http\Controllers\GestorMaestro\Dashboard;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Kreait\Firebase\Contract\Auth;
 use Kreait\Firebase\Factory;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +14,13 @@ class TallerController extends Controller
     protected $auth;
     protected $firestoreDb;
 
-    public function __construct()
+    public function __construct(Auth $auth, FirestoreClient $firestoreDb)
+    {
+        $this->auth = $auth;
+        $this->firestoreDb = $firestoreDb;
+    }
+
+    /* public function __construct()
     {
         try {
             // Buscar el archivo de credenciales
@@ -81,7 +88,7 @@ class TallerController extends Controller
             Log::error('Error inicializando Firebase en GestorTallerController: ' . $e->getMessage());
             throw $e;
         }
-    }
+    } */
 
     /**
      * Mostrar la lista de todos los talleres con paginación

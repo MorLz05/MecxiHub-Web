@@ -8,13 +8,20 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Exception\Auth\EmailExistsException;
 use Google\Cloud\Firestore\FirestoreClient;
 use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Contract\Auth;
 
 class UsuarioController extends Controller
 {
     protected $auth;
     protected $firestoreDb;
 
-    public function __construct()
+    public function __construct(Auth $auth, FirestoreClient $firestoreDb)
+    {
+        $this->auth = $auth;
+        $this->firestoreDb = $firestoreDb;
+    }
+
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -68,7 +75,7 @@ class UsuarioController extends Controller
             $this->auth = null;
             $this->firestoreDb = null;
         }
-    }
+    } */
 
     /**
      * Mostrar la lista de usuarios con paginación
@@ -112,7 +119,7 @@ class UsuarioController extends Controller
             $usuarios = $this->applyFilters($usuarios, $search, $filterRol);
 
             // Ordenar por fecha de creación (más reciente primero)
-            usort($usuarios, function($a, $b) {
+            usort($usuarios, function ($a, $b) {
                 $dateA = isset($a['fecha_creacion']) ? strtotime($a['fecha_creacion']) : 0;
                 $dateB = isset($b['fecha_creacion']) ? strtotime($b['fecha_creacion']) : 0;
                 return $dateB - $dateA;
@@ -138,7 +145,6 @@ class UsuarioController extends Controller
                 'totalPages',
                 'total'
             ));
-
         } catch (\Exception $e) {
             Log::error('Error en index de UsuarioController: ' . $e->getMessage());
             return redirect()->route('gestor.cuenta')->with('error', 'Error al cargar los usuarios.');
@@ -150,7 +156,7 @@ class UsuarioController extends Controller
      */
     private function applyFilters($usuarios, $search, $filterRol)
     {
-        return array_filter($usuarios, function($usuario) use ($search, $filterRol) {
+        return array_filter($usuarios, function ($usuario) use ($search, $filterRol) {
             // Filtro de rol
             if (!empty($filterRol)) {
                 $userRol = $usuario['rol'] ?? '';
@@ -197,7 +203,6 @@ class UsuarioController extends Controller
             }
 
             return view('GestorMaestro.Usuario.create');
-
         } catch (\Exception $e) {
             Log::error('Error en create de UsuarioController: ' . $e->getMessage());
             return redirect()->route('gestor.usuarios')->with('error', 'Error al cargar el formulario.');
@@ -261,7 +266,6 @@ class UsuarioController extends Controller
                     return redirect()
                         ->route('gestor.usuarios')
                         ->with('success', 'Usuario ' . $validated['name'] . ' creado exitosamente con rol ' . $validated['rol']);
-
                 } catch (\Exception $e) {
                     Log::error('❌ Error al guardar en Firestore: ' . $e->getMessage());
 
@@ -282,7 +286,6 @@ class UsuarioController extends Controller
                     ->withInput()
                     ->with('error', 'Firestore no está disponible.');
             }
-
         } catch (EmailExistsException $e) {
             Log::error('Email ya registrado: ' . $request->email);
             return back()
@@ -345,7 +348,6 @@ class UsuarioController extends Controller
                 'activo' => $nuevoEstado,
                 'message' => $nuevoEstado ? 'Usuario activado exitosamente' : 'Usuario desactivado'
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error en toggleActivo: ' . $e->getMessage());
             return response()->json(['error' => 'Error al actualizar el estado: ' . $e->getMessage()], 500);

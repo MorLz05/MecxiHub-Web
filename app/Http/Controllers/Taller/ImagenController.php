@@ -11,11 +11,19 @@ use Google\Cloud\Firestore\FirestoreClient;
 
 class ImagenController extends Controller
 {
-    protected $firestoreDb;
-    protected $storage;
-    protected $bucketName;
 
-    public function __construct()
+    protected FirestoreClient $firestoreDb;
+    protected Storage $storage;
+    protected string $bucketName;
+
+    public function __construct(FirestoreClient $firestoreDb, Storage $storage)
+    {
+        $this->firestoreDb = $firestoreDb;
+        $this->storage = $storage;
+        $this->bucketName = env('FIREBASE_STORAGE_BUCKET', 'mecxihub-db.firebasestorage.app');
+    }
+
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -63,7 +71,7 @@ class ImagenController extends Controller
             $this->firestoreDb = null;
             $this->storage = null;
         }
-    }
+    } */
 
     private function obtenerTallerIdDelUsuario()
     {

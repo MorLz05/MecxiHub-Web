@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Conductor\Dashboard;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Contract\Auth;
 use Google\Cloud\Firestore\FirestoreClient;
 use Kreait\Firebase\Factory;
 
@@ -13,7 +14,13 @@ class VehiculoController extends Controller
     protected $auth;
     protected $firestoreDb;
 
-    public function __construct()
+    public function __construct(Auth $auth, FirestoreClient $firestoreDb)
+    {
+        $this->auth = $auth;
+        $this->firestoreDb = $firestoreDb;
+    }
+    
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -101,7 +108,7 @@ class VehiculoController extends Controller
             $this->firestoreDb = null;
             $this->auth = null;
         }
-    }
+    } */
 
     public function index()
     {

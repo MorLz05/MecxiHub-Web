@@ -8,15 +8,22 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Exception\Auth\EmailExistsException;
 use Kreait\Firebase\Exception\Auth\UserNotFound;
 use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Contract\Auth;
 use Google\Cloud\Firestore\FirestoreClient;
 
 class FirebaseAuthController extends Controller
 {
-    protected $auth;
     protected $firestore;
-    protected $firestoreDb;
+    protected Auth $auth;
+    protected FirestoreClient $firestoreDb;
 
-    public function __construct()
+    public function __construct(Auth $auth, FirestoreClient $firestoreDb)
+    {
+        $this->auth = $auth;
+        $this->firestoreDb = $firestoreDb;
+    }
+
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -85,7 +92,7 @@ class FirebaseAuthController extends Controller
             Log::error('Error inicializando Firebase: ' . $e->getMessage());
             throw $e;
         }
-    }
+    } */
 
     public function showRegisterForm()
     {
@@ -946,9 +953,9 @@ class FirebaseAuthController extends Controller
         return view('taller.dashboard');
     }
 
-    public function conductorDashboard()
+    public function conductorDashboard(\App\Http\Controllers\Conductor\Dashboard\ServicioController $servicioController)
     {
-        $stats = (new \App\Http\Controllers\Conductor\Dashboard\ServicioController())->stats();
+        $stats = $servicioController->stats();
         return view('conductor.dashboard.resumen', compact('stats'));
     }
 }

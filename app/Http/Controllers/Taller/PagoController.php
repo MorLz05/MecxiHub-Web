@@ -15,7 +15,15 @@ class PagoController extends Controller
 {
     protected $firestoreDb;
 
-    public function __construct()
+    public function __construct(FirestoreClient $firestoreDb)
+    {
+        $this->firestoreDb = $firestoreDb;
+
+        // Configurar Stripe
+        Stripe::setApiKey(config('services.stripe.secret'));
+    }
+
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -54,7 +62,7 @@ class PagoController extends Controller
 
         // Configurar Stripe
         Stripe::setApiKey(config('services.stripe.secret'));
-    }
+    } */
 
     /**
      * Crea una sesión de pago con Stripe Checkout
@@ -150,7 +158,6 @@ class PagoController extends Controller
                 'url' => $session->url,
                 'session_id' => $session->id,
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error creando sesión de pago: ' . $e->getMessage());
             return response()->json([
@@ -220,7 +227,8 @@ class PagoController extends Controller
                     $this->firestoreDb->collection('pagos_pendientes')->document($session->id)->set([
                         'estado' => 'expirado',
                     ], ['merge' => true]);
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                }
                 break;
         }
 
@@ -306,7 +314,6 @@ class PagoController extends Controller
             ]);
 
             Log::info('✅ Pago procesado: ' . $session->id . ' para taller: ' . $tallerId);
-
         } catch (\Exception $e) {
             Log::error('Error procesando pago exitoso: ' . $e->getMessage());
             Log::error($e->getTraceAsString());

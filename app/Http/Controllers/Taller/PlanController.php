@@ -11,7 +11,12 @@ class PlanController extends Controller
 {
     protected $firestoreDb;
 
-    public function __construct()
+    public function __construct(FirestoreClient $firestoreDb)
+    {
+        $this->firestoreDb = $firestoreDb;
+    }
+
+    /* public function __construct()
     {
         try {
             $credentialsFile = env('FIREBASE_CREDENTIALS', 'mecxihub-db-firebase-adminsdk-fbsvc-acf0185b95.json');
@@ -50,7 +55,7 @@ class PlanController extends Controller
             Log::error('Error inicializando Taller\PlanController: ' . $e->getMessage());
             $this->firestoreDb = null;
         }
-    }
+    } */
 
     /**
      * Lista todos los planes dirigidos al tipo de usuario "Taller"
