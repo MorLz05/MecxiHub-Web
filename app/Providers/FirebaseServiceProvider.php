@@ -89,6 +89,14 @@ class FirebaseServiceProvider extends ServiceProvider
     {
         $value = env('FIREBASE_CREDENTIALS');
 
+        // DEBUG TEMPORAL
+        Log::info('FIREBASE_CREDENTIALS debug', [
+            'es_null'    => is_null($value),
+            'es_string'  => is_string($value),
+            'longitud'   => is_string($value) ? strlen($value) : null,
+            'preview'    => is_string($value) ? substr($value, 0, 100) : null,
+        ]);
+
         if (empty($value)) {
             throw new \Exception('FIREBASE_CREDENTIALS no está configurada');
         }
