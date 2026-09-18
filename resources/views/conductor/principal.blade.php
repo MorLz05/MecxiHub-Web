@@ -154,101 +154,205 @@
         </div>
     </div>
 
-    <!-- TALLERES RECOMENDADOS SECTION -->
+        <!-- TALLERES RECOMENDADOS SECTION -->
     <section class="max-w-6xl mx-auto px-4 py-14">
-        <div class="flex items-center justify-between mb-8">
+
+        {{-- Aviso de ubicación --}}
+        <div id="location-banner" class="hidden mb-6 p-4 rounded-2xl border flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" id="location-banner-icon-container">
+                    <i class="fa-solid fa-location-crosshairs text-lg" id="location-banner-icon"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-sm" id="location-banner-title">Activa tu ubicación</p>
+                    <p class="text-xs opacity-80" id="location-banner-text">Encuentra los talleres más cercanos a ti.</p>
+                </div>
+            </div>
+            <button type="button" id="btn-activar-ubicacion"
+                class="shrink-0 px-4 py-2.5 rounded-xl bg-[#0039A6] hover:bg-blue-800 text-white font-semibold text-xs transition whitespace-nowrap">
+                <i class="fa-solid fa-location-crosshairs mr-1"></i> Usar mi ubicación
+            </button>
+        </div>
+
+        <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
             <div class="flex items-center gap-2.5">
                 <i class="fa-solid fa-star text-[#FF6B00] text-xl"></i>
-                <h3 class="text-xl font-bold text-gray-900">Talleres recomendados para ti</h3>
+                <h3 class="text-xl font-bold text-gray-900">
+                    @if ($tieneUbicacion)
+                        Talleres cerca de ti
+                    @else
+                        Talleres mejor valorados
+                    @endif
+                </h3>
             </div>
-            <a href="#" class="text-[#0039A6] font-semibold text-sm hover:underline flex items-center gap-1">
+            <a href="{{ route('buscar.talleres') }}"
+                class="text-[#0039A6] font-semibold text-sm hover:underline flex items-center gap-1">
                 Ver todos <i class="fa-solid fa-chevron-right text-xs"></i>
             </a>
         </div>
 
-        <!-- Cards Container -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        @if (empty($talleres))
+            {{-- Estado vacío --}}
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-12 text-center">
+                <i class="fa-solid fa-store-slash text-5xl text-gray-300"></i>
+                <h3 class="text-lg font-bold text-gray-800 mt-4">Aún no hay talleres disponibles</h3>
+                <p class="text-gray-500 text-sm mt-1">Vuelve más tarde para descubrir talleres verificados.</p>
+            </div>
+        @else
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                @foreach ($talleres as $taller)
+                    @php
+                        $rating = (float) ($taller['calificacion_promedio'] ?? 0);
+                        $reviews = (int) ($taller['total_resenas'] ?? 0);
+                        $distancia = $taller['distancia_km'] ?? null;
+                        $logoUrl = $taller['imagen_principal'] ?? null;
+                        $iniciales = '';
+                        foreach (preg_split('/\s+/', trim($taller['nombre'] ?? 'T')) as $p) {
+                            if (!empty($p)) $iniciales .= mb_strtoupper(mb_substr($p, 0, 1));
+                            if (mb_strlen($iniciales) >= 2) break;
+                        }
+                        if (empty($iniciales)) $iniciales = 'T';
+                    @endphp
 
-            @php
-                $talleres = [
-                    [
-                        'nombre' => 'Taller López',
-                        'especialidad' => 'Frenos, Suspensión',
-                        'rating' => '4.8',
-                        'reviews' => '128',
-                        'distancia' => '1.2 km de ti',
-                        'imagen' => 'https://images.unsplash.com/photo-1613214149922-f1809c99b414?auto=format&fit=crop&w=500&q=80',
-                    ],
-                    [
-                        'nombre' => 'Mecánica Express',
-                        'especialidad' => 'Frenos, Afinación',
-                        'rating' => '4.6',
-                        'reviews' => '96',
-                        'distancia' => '1.8 km de ti',
-                        'imagen' => 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=500&q=80',
-                    ],
-                    [
-                        'nombre' => 'AutoFix',
-                        'especialidad' => 'Frenos, Motor',
-                        'rating' => '4.7',
-                        'reviews' => '83',
-                        'distancia' => '2.3 km de ti',
-                        'imagen' => 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&w=500&q=80',
-                    ],
-                ];
-            @endphp
-
-            @foreach ($talleres as $taller)
-                <div class="bg-white rounded-2xl border border-blue-200/80 p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between">
-                    <div>
-                        <div class="flex gap-4 items-start">
-                            <!-- Image -->
-                            <img src="{{ $taller['imagen'] }}" alt="{{ $taller['nombre'] }}"
-                                class="w-24 h-24 rounded-xl object-cover flex-shrink-0">
-
-                            <!-- Content -->
-                            <div class="space-y-1">
-                                <div class="flex items-center gap-1.5">
-                                    <h4 class="font-bold text-gray-900 text-base">{{ $taller['nombre'] }}</h4>
-                                    <i class="fa-solid fa-circle-check text-[#0039A6] text-sm"></i>
-                                </div>
-                                <p class="text-xs text-gray-500">Especialidad: {{ $taller['especialidad'] }}</p>
-
-                                <!-- Rating -->
-                                <div class="flex items-center gap-1 text-xs pt-1">
-                                    <span class="font-bold text-gray-800">{{ $taller['rating'] }}</span>
-                                    <div class="text-[#FF6B00] flex text-[10px] gap-0.5">
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
-                                        <i class="fa-solid fa-star"></i>
+                    <div class="bg-white rounded-2xl border border-blue-200/80 p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                        <div>
+                            <div class="flex gap-4 items-start">
+                                <!-- Image / Logo -->
+                                @if ($logoUrl)
+                                    <div class="w-24 h-24 rounded-xl bg-white border border-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                                        <img src="{{ $logoUrl }}" alt="{{ $taller['nombre'] }}"
+                                            class="w-full h-full object-contain p-2">
                                     </div>
-                                    <span class="text-gray-400">({{ $taller['reviews'] }})</span>
-                                </div>
+                                @else
+                                    <div class="w-24 h-24 rounded-xl bg-gradient-to-br from-[#0039A6] to-[#001B5E] flex items-center justify-center text-white font-black text-2xl shrink-0">
+                                        {{ $iniciales }}
+                                    </div>
+                                @endif
 
-                                <!-- Distance -->
-                                <p class="text-xs text-gray-500 flex items-center gap-1 pt-1">
-                                    <i class="fa-solid fa-location-dot text-gray-400"></i> A {{ $taller['distancia'] }}
-                                </p>
+                                <!-- Content -->
+                                <div class="space-y-1 flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <h4 class="font-bold text-gray-900 text-base truncate">{{ $taller['nombre'] }}</h4>
+                                        @if ($taller['verificado'] ?? false)
+                                            <i class="fa-solid fa-circle-check text-[#0039A6] text-sm shrink-0" title="Taller verificado"></i>
+                                        @endif
+                                    </div>
+
+                                    @if (!empty($taller['especialidades_str']))
+                                        <p class="text-xs text-gray-500 truncate">Especialidad: {{ $taller['especialidades_str'] }}</p>
+                                    @elseif (!empty($taller['direccion']))
+                                        <p class="text-xs text-gray-500 truncate">{{ $taller['direccion'] }}</p>
+                                    @endif
+
+                                    <!-- Rating -->
+                                    <div class="flex items-center gap-1 text-xs pt-1">
+                                        <span class="font-bold text-gray-800">{{ number_format($rating, 1) }}</span>
+                                        <div class="text-[#FF6B00] flex text-[10px] gap-0.5">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                <i class="fa-solid fa-star {{ $i <= round($rating) ? '' : 'text-gray-300' }}"></i>
+                                            @endfor
+                                        </div>
+                                        <span class="text-gray-400">({{ $reviews }})</span>
+                                    </div>
+
+                                    <!-- Distance -->
+                                    <p class="text-xs text-gray-500 flex items-center gap-1 pt-1">
+                                        @if ($distancia !== null)
+                                            <i class="fa-solid fa-location-dot text-gray-400"></i>
+                                            A {{ $distancia }} km de ti
+                                        @elseif (!empty($taller['direccion']))
+                                            <i class="fa-solid fa-location-dot text-gray-400"></i>
+                                            <span class="truncate">{{ $taller['direccion'] }}</span>
+                                        @else
+                                            <i class="fa-solid fa-location-dot text-gray-400"></i>
+                                            Ubicación no disponible
+                                        @endif
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="grid grid-cols-2 gap-2 mt-5">
-                        <a href="#"
-                            class="text-center py-2.5 px-3 rounded-xl bg-blue-50 text-[#0039A6] font-semibold text-xs hover:bg-blue-100 transition">
-                            Ver perfil
-                        </a>
-                        <a href="#"
-                            class="text-center py-2.5 px-3 rounded-xl bg-[#FF6B00] text-white font-semibold text-xs hover:bg-orange-600 transition flex items-center justify-center gap-1.5 shadow-sm">
-                            <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
-                        </a>
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-2 gap-2 mt-5">
+                            <a href="{{ route('taller.perfil', ['id' => $taller['id']]) }}"
+                                class="text-center py-2.5 px-3 rounded-xl bg-blue-50 text-[#0039A6] font-semibold text-xs hover:bg-blue-100 transition">
+                                Ver perfil
+                            </a>
+                            @php
+                                $tel = preg_replace('/[^0-9]/', '', $taller['telefono'] ?? '');
+                            @endphp
+                            @if ($tel)
+                                <a href="https://wa.me/52{{ $tel }}" target="_blank" rel="noopener"
+                                    class="text-center py-2.5 px-3 rounded-xl bg-[#FF6B00] text-white font-semibold text-xs hover:bg-orange-600 transition flex items-center justify-center gap-1.5 shadow-sm">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+                                </a>
+                            @else
+                                <a href="{{ route('taller.perfil', ['id' => $taller['id']]) }}"
+                                    class="text-center py-2.5 px-3 rounded-xl bg-[#FF6B00] text-white font-semibold text-xs hover:bg-orange-600 transition flex items-center justify-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-arrow-right text-sm"></i> Visitar
+                                </a>
+                            @endif
+                        </div>
                     </div>
-                </div>
-            @endforeach
-
-        </div>
+                @endforeach
+            </div>
+        @endif
     </section>
+
+    {{-- JS para detección de ubicación --}}
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const banner = document.getElementById('location-banner');
+                const btnActivar = document.getElementById('btn-activar-ubicacion');
+                const tieneUbicacion = @json($tieneUbicacion ?? false);
+
+                // Mostrar el banner si no tiene ubicación
+                if (!tieneUbicacion && banner) {
+                    banner.classList.remove('hidden');
+                    banner.classList.add('bg-blue-50', 'border-blue-200', 'text-blue-800');
+                    document.getElementById('location-banner-icon-container').classList.add('bg-blue-100');
+                    document.getElementById('location-banner-icon').classList.add('text-blue-600');
+                }
+
+                btnActivar?.addEventListener('click', function () {
+                    if (!navigator.geolocation) {
+                        alert('Tu navegador no soporta geolocalización.');
+                        return;
+                    }
+
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Obteniendo ubicación...';
+
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            const lat = pos.coords.latitude;
+                            const lng = pos.coords.longitude;
+
+                            // Redirigir con query params
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('user_lat', lat.toFixed(6));
+                            url.searchParams.set('user_lng', lng.toFixed(6));
+                            window.location.href = url.toString();
+                        },
+                        (err) => {
+                            this.disabled = false;
+                            this.innerHTML = '<i class="fa-solid fa-location-crosshairs mr-1"></i> Usar mi ubicación';
+
+                            let msg = 'No se pudo obtener tu ubicación.';
+                            if (err.code === err.PERMISSION_DENIED) {
+                                msg = 'Permiso de ubicación denegado. Actívalo en tu navegador (icono del candado junto a la URL).';
+                            } else if (err.code === err.TIMEOUT) {
+                                msg = 'La solicitud tardó demasiado. Intenta de nuevo.';
+                            } else if (err.code === err.POSITION_UNAVAILABLE) {
+                                msg = 'Ubicación no disponible.';
+                            }
+                            alert(msg);
+                        },
+                        { enableHighAccuracy: true, timeout: 10000 }
+                    );
+                });
+            });
+        </script>
+    @endpush
 @endsection

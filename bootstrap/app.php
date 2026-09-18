@@ -7,8 +7,8 @@ use App\Http\Middleware\CheckGestorRole;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        commands: __DIR__.'/../routes/console.php',
+        web: __DIR__ . '/../routes/web.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
 
@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.firebase' => \App\Http\Middleware\FirebaseAuthMiddleware::class,
             'gestor' => CheckGestorRole::class,
             'taller' => \App\Http\Middleware\TallerMiddleware::class,
+        ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'stripe/webhook',
         ]);
 
         // Si quieres agregar middleware a grupos existentes

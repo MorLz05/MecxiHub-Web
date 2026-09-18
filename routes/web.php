@@ -11,9 +11,7 @@ use App\Http\Controllers\Taller\Dashboard\CuentaController as TallerCuentaContro
 use App\Http\Controllers\Taller\CalificacionController;
 
 // ===== VISTAS PÚBLICAS =====
-Route::get('/', function () {
-    return view('conductor.principal');
-})->name('home');
+Route::get('/', [App\Http\Controllers\Conductor\Dashboard\HomeController::class, 'index'])->name('home');
 
 // ===== AUTENTICACIÓN =====
 Route::get('/login', [FirebaseAuthController::class, 'showLoginForm'])->name('login');
@@ -53,6 +51,11 @@ Route::get('/password/reset-form', [PasswordResetController::class, 'showResetFo
 
 Route::post('/password/update', [PasswordResetController::class, 'resetPassword'])
     ->name('password.update');
+
+// ===== WEBHOOK STRIPE (público) =====
+Route::post('/stripe/webhook', [App\Http\Controllers\Taller\PagoController::class, 'webhook'])
+    ->name('stripe.webhook')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 // ===== RUTAS PROTEGIDAS (conductor) =====
 Route::middleware(['auth.firebase'])->group(function () {
@@ -252,8 +255,10 @@ Route::middleware(['taller'])->prefix('taller')->name('taller.')->group(function
     Route::put('/seguridad/email', [App\Http\Controllers\Taller\SeguridadController::class, 'updateEmail'])->name('seguridad.update.email');
     Route::put('/seguridad/password', [App\Http\Controllers\Taller\SeguridadController::class, 'updatePassword'])->name('seguridad.update.password');
 
-    // Planes
+    // Planes y pagos
     Route::get('/planes', [App\Http\Controllers\Taller\PlanController::class, 'index'])->name('planes');
+    Route::post('/planes/pagar', [App\Http\Controllers\Taller\PagoController::class, 'crearSesion'])->name('planes.pagar');
+    Route::get('/planes/exito', [App\Http\Controllers\Taller\PagoController::class, 'exito'])->name('planes.exito');
 
     // Órdenes de trabajo
     Route::get('/ordenes', [App\Http\Controllers\Taller\OrdenController::class, 'index'])->name('ordenes');
