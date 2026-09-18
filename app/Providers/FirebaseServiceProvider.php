@@ -90,31 +90,27 @@ class FirebaseServiceProvider extends ServiceProvider
         $value = env('FIREBASE_CREDENTIALS');
 
         if (empty($value)) {
-            throw new \Exception('FIREBASE_CREDENTIALS está vacía o no está configurada en el entorno.');
+            throw new \Exception('FIREBASE_CREDENTIALS no está configurada.');
         }
 
-        // Caso 1: es una ruta de archivo que existe (local)
+        // Caso 1: ruta de archivo existente (local)
         if (is_string($value) && file_exists($value)) {
             return $value;
         }
 
-        // Caso 2: es un JSON completo (Cloud o local)
+        // Caso 2: JSON en string (Cloud)
         if (is_string($value)) {
-            // Limpiar posibles comillas externas sobrantes
-            $clean = trim($value, " \t\n\r\0\x0B\"'");
-
-            $decoded = json_decode($clean, true);
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $decoded = $this->decodeJsonCredentials($value);
+            if ($decoded !== null) {
                 return $decoded;
             }
 
-            // Guardar el error para el throw
             $jsonError = json_last_error_msg();
         } else {
             $jsonError = 'valor no es string';
         }
 
-        // Caso 3: buscar en rutas típicas (local)
+        // Caso 3: buscar archivo en rutas típicas (local)
         if (is_string($value)) {
             $possiblePaths = [
                 storage_path('app/' . $value),
@@ -130,7 +126,6 @@ class FirebaseServiceProvider extends ServiceProvider
             }
         }
 
-        // Error detallado
         $preview = is_string($value) ? substr($value, 0, 150) : gettype($value);
         throw new \Exception(
             "No se pudo resolver FIREBASE_CREDENTIALS. " .
@@ -138,5 +133,51 @@ class FirebaseServiceProvider extends ServiceProvider
                 "JSON error: {$jsonError}. " .
                 "Preview: {$preview}"
         );
+    }
+
+    /**
+     * Intenta decodificar el JSON de credenciales manejando
+     * saltos de línea reales y otros problemas comunes.
+     */
+    private function decodeJsonCredentials(string $raw): ?array
+    {
+        // Limpieza básica
+        $clean = trim($raw, " \t\n\r\0\x0B\"'");
+        $clean = preg_replace('/^\xEF\xBB\xBF/', '', $clean); // BOM
+
+        // Intento 1: decodificar tal cual (funciona si ya está en una línea)
+        $decoded = json_decode($clean, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        // Intento 2: reemplazar saltos reales por \n literales ANTES de decodificar
+        // Esto preserva los \n dentro de private_key
+        $escaped = str_replace(
+            ["\r\n", "\r", "\n"],
+            ['\\n', '\\n', '\\n'],
+            $clean
+        );
+
+        $decoded = json_decode($escaped, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            // Los \n literales dentro de private_key ahora son saltos reales,
+            // que es lo que Google/Firebase espera en el JSON decodificado.
+            // Pero si el JSON ya los tenía como \n literales, se vuelven \\n → hay que corregir.
+            if (isset($decoded['private_key'])) {
+                $decoded['private_key'] = str_replace('\\\\n', "\n", $decoded['private_key']);
+            }
+            return $decoded;
+        }
+
+        // Intento 3: eliminar todos los saltos reales (último recurso)
+        $flat = str_replace(["\r\n", "\r", "\n", "\t"], ' ', $clean);
+        $flat = preg_replace('/\s+/', ' ', $flat);
+        $decoded = json_decode($flat, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        return null;
     }
 }
