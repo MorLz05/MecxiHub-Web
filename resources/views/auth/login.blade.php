@@ -337,6 +337,14 @@
                 forgotLink.setAttribute('href', 'javascript:void(0)');
                 forgotLink.setAttribute('onclick', 'openPasswordResetModal()');
             }
+            const urlParams = new URLSearchParams(window.location.search);
+            if(
+                urlParams.get('modal') === 'recuperar' ||
+                urlParams.has('recuperar') ||
+                window.location.hash === '#recuperar'
+            ){
+                openPasswordResetModal();
+            }
         });
 
         // Si hay errores, abrir el modal automáticamente

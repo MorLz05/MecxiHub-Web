@@ -86,8 +86,21 @@ class InformacionController extends Controller
                             $tallerData['servicios_count'] = $tallerData['servicios_count'] ?? [];
                             $tallerData['horario'] = $tallerData['horario'] ?? [];
                             $tallerData['verificado'] = $tallerData['verificado'] ?? false;
-                            $tallerData['plan'] = $tallerData['plan'] ?? null;
                             $tallerData['email'] = $tallerData['email'] ?? '';
+
+                            // 🔑 Normalizar "plan" a string (nombre del plan)
+                            $planRaw = $tallerData['plan'] ?? null;
+                            if (is_array($planRaw)) {
+                                $planNombre = $planRaw['nombre']
+                                    ?? $planRaw['name']
+                                    ?? $planRaw['titulo']
+                                    ?? null;
+                            } elseif (is_string($planRaw) && $planRaw !== '') {
+                                $planNombre = $planRaw;
+                            } else {
+                                $planNombre = null;
+                            }
+                            $tallerData['plan'] = $planNombre;
 
                             // Cargar imágenes del establecimiento
                             $tallerData['imagenes'] = [];
