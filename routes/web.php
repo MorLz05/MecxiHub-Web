@@ -137,6 +137,9 @@ Route::middleware(['auth.firebase'])->group(function () {
             return view('conductor.dashboard.informacion-personal');
         })->name('informacion-personal');
 
+        Route::get('/planes', [App\Http\Controllers\Conductor\Dashboard\PlanController::class, 'index'])
+        ->name('planes');
+        
         // Rutas de vehículos
         Route::get('/vehiculos', [VehiculoController::class, 'index'])->name('vehiculos');
         Route::get('/vehiculos/crear', [VehiculoController::class, 'create'])->name('vehiculos.crear');

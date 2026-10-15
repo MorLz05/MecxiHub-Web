@@ -66,8 +66,9 @@
                                     </span>
                                 @endif
                             </a>
-                            <a href="#"
-                                class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50 hover:text-[#0039A6] font-medium text-sm transition">
+                            <a href="{{ route('cuenta.planes') }}"
+                                class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition font-medium text-sm
+    {{ request()->routeIs('cuenta.planes*') ? 'bg-[#0039A6] text-white' : 'text-gray-600 hover:bg-gray-50 hover:text-[#0039A6]' }}">
                                 <i class="fa-solid fa-crown text-base"></i>
                                 Planes
                             </a>

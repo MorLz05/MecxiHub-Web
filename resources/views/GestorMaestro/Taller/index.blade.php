@@ -92,15 +92,35 @@
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4 font-medium text-gray-900">
                                 <div class="flex items-center gap-3">
-                                    @if (isset($taller['foto_url']) && $taller['foto_url'])
-                                        <img src="{{ $taller['foto_url'] }}" alt="{{ $taller['nombre'] }}"
-                                            class="w-8 h-8 rounded-full object-cover">
+                                    @php
+                                        $logo = $taller['logo_url'] ?? null;
+                                        $iniciales = '';
+                                        foreach (preg_split('/\s+/', trim($taller['nombre'] ?? 'T')) as $p) {
+                                            if (!empty($p)) {
+                                                $iniciales .= mb_strtoupper(mb_substr($p, 0, 1));
+                                            }
+                                            if (mb_strlen($iniciales) >= 2) {
+                                                break;
+                                            }
+                                        }
+                                        if (empty($iniciales)) {
+                                            $iniciales = 'T';
+                                        }
+                                    @endphp
+
+                                    @if ($logo)
+                                        <div
+                                            class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                            <img src="{{ $logo }}" alt="{{ $taller['nombre'] }}"
+                                                class="w-full h-full object-contain p-0.5">
+                                        </div>
                                     @else
                                         <div
-                                            class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                                            <i class="fa-solid fa-warehouse text-xs"></i>
+                                            class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-blue to-brand-darkblue flex items-center justify-center flex-shrink-0 text-white font-bold text-xs">
+                                            {{ $iniciales }}
                                         </div>
                                     @endif
+
                                     <span class="truncate max-w-[150px]">{{ $taller['nombre'] ?? 'Sin nombre' }}</span>
                                 </div>
                             </td>
