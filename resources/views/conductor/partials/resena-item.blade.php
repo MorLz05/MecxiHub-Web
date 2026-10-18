@@ -2,14 +2,13 @@
     $nombre = $resena['usuario_nombre'] ?? 'Cliente';
     $iniciales = $resena['usuario_inicial'] ?? strtoupper(mb_substr($nombre, 0, 1));
     $rating = (int) ($resena['rating'] ?? 0);
-    $fecha = !empty($resena['fecha'])
-        ? \Carbon\Carbon::parse($resena['fecha'])->diffForHumans()
-        : 'Reciente';
+    $fecha = !empty($resena['fecha']) ? \Carbon\Carbon::parse($resena['fecha'])->diffForHumans() : 'Reciente';
 @endphp
 
 <div class="p-5 rounded-2xl bg-gray-50/80 border border-gray-100">
     <div class="flex items-start gap-4">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#0039A6] to-[#0066FF] flex items-center justify-center flex-shrink-0 shadow-sm">
+        <div
+            class="w-12 h-12 rounded-full bg-gradient-to-br from-[#0039A6] to-[#0066FF] flex items-center justify-center flex-shrink-0 shadow-sm">
             <span class="text-white font-bold text-sm">{{ $iniciales }}</span>
         </div>
         <div class="flex-1 min-w-0">
@@ -26,8 +25,8 @@
             </div>
 
             @if (!empty($resena['comentario']))
-                <p class="text-gray-600 text-sm mt-3 leading-relaxed">
-                    {{ $resena['comentario'] }}
+                <p class="text-gray-700 text-sm mt-3 leading-relaxed">
+                    {{ Str::limit(strip_tags($resena['comentario'] ?? ''), 2000) }}
                 </p>
             @endif
 

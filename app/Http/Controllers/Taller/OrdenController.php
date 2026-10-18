@@ -75,6 +75,16 @@ class OrdenController extends Controller
         }
     } */
 
+    private function sanitize(string $value, int $max = 2000): string
+    {
+        $value = strip_tags($value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
+        $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = str_replace(['<', '>', '{', '}'], '', $value);
+        $value = preg_replace('/\s+/u', ' ', trim($value));
+        return mb_substr($value, 0, $max);
+    }
+
     /**
      * Obtiene el taller_id del usuario actual
      */
@@ -231,39 +241,104 @@ class OrdenController extends Controller
         try {
             $validated = $request->validate([
                 // Cliente
-                'cliente_nombre' => 'required|string|max:150',
+                'cliente_nombre' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:150',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'cliente_email' => 'nullable|email|max:150',
-                'cliente_telefono' => 'nullable|string|max:20',
+                'cliente_telefono' => [
+                    'nullable',
+                    'string',
+                    'max:20',
+                    'regex:/^[\d\s\+\-\(\)]{7,20}$/',
+                ],
 
                 // Vehículo
-                'vehiculo.marca' => 'required|string|max:80',
-                'vehiculo.modelo' => 'required|string|max:80',
+                'vehiculo.marca' => [
+                    'required',
+                    'string',
+                    'max:80',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
+                'vehiculo.modelo' => [
+                    'required',
+                    'string',
+                    'max:80',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'vehiculo.anio' => 'required|integer|min:1900|max:' . (date('Y') + 1),
-                'vehiculo.color' => 'nullable|string|max:50',
-                'vehiculo.placas' => 'required|string|max:20',
+                'vehiculo.color' => [
+                    'nullable',
+                    'string',
+                    'max:50',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
+                'vehiculo.placas' => [
+                    'required',
+                    'string',
+                    'max:20',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'vehiculo.kilometraje' => 'nullable|integer|min:0',
 
                 // Fallas
                 'fallas' => 'required|array|min:1',
-                'fallas.*.categoria' => 'required|string|max:100',
-                'fallas.*.descripcion' => 'nullable|string|max:500',
+                'fallas.*.categoria' => [
+                    'required',
+                    'string',
+                    'max:100',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
+                'fallas.*.descripcion' => [
+                    'nullable',
+                    'string',
+                    'max:500',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'fallas.*.prioridad' => 'required|in:Baja,Media,Alta,Urgente',
                 'fallas.*.precio' => 'required|numeric|min:0',
 
                 // Presupuesto
                 'presupuesto.anticipo' => 'nullable|numeric|min:0',
-                'presupuesto.metodo_pago' => 'nullable|string|max:50',
+                'presupuesto.metodo_pago' => [
+                    'nullable',
+                    'string',
+                    'max:50',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'precio_final' => 'nullable|numeric|min:0',
 
                 // Fechas
                 'fecha_entrega_estimada' => 'required|date',
 
-                // Asignación de responsables
+                // Asignación
                 'modo_asignacion' => 'nullable|in:none,general,por_falla',
                 'responsable_general_id' => 'nullable|string|max:100',
-                'responsable_general_nombre' => 'nullable|string|max:150',
+                'responsable_general_nombre' => [
+                    'nullable',
+                    'string',
+                    'max:150',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'fallas.*.responsable_id' => 'nullable|string|max:100',
-                'fallas.*.responsable_nombre' => 'nullable|string|max:150',
+                'fallas.*.responsable_nombre' => [
+                    'nullable',
+                    'string',
+                    'max:150',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
+            ], [
+                'cliente_nombre.regex' => 'El nombre del cliente contiene caracteres no permitidos.',
+                'cliente_telefono.regex' => 'El teléfono solo puede contener números, +, -, ( ) y espacios.',
+                'vehiculo.marca.regex' => 'La marca contiene caracteres no permitidos.',
+                'vehiculo.modelo.regex' => 'El modelo contiene caracteres no permitidos.',
+                'vehiculo.color.regex' => 'El color contiene caracteres no permitidos.',
+                'vehiculo.placas.regex' => 'Las placas contienen caracteres no permitidos.',
+                'fallas.*.categoria.regex' => 'La categoría de la falla contiene caracteres no permitidos.',
+                'fallas.*.descripcion.regex' => 'La descripción de la falla contiene caracteres no permitidos.',
             ]);
 
             // Regla: fecha_entrega_estimada >= fecha_orden (ahora)
@@ -276,13 +351,11 @@ class OrdenController extends Controller
                 ]);
             }
 
-            // Calcular precio final sugerido (suma de fallas)
             $precioSugerido = 0;
             foreach ($validated['fallas'] as $falla) {
                 $precioSugerido += (float) $falla['precio'];
             }
 
-            // Si el usuario envió un precio_final, respetarlo; si no, usar el sugerido
             $precioFinal = isset($request->precio_final) && $request->precio_final !== '' && $request->precio_final !== null
                 ? (float) $request->precio_final
                 : $precioSugerido;
@@ -344,8 +417,13 @@ class OrdenController extends Controller
                 }
             }
 
-            // Generar folio único
             $folio = $this->generarFolio($tallerId);
+
+            // 🔒 SANITIZACIÓN (defensa en profundidad)
+            $clienteNombre    = $this->sanitize($validated['cliente_nombre'], 150);
+            $clienteEmail     = filter_var($validated['cliente_email'] ?? '', FILTER_VALIDATE_EMAIL) ?: '';
+            $clienteTelefono  = preg_replace('/[^\d\s\+\-\(\)]/', '', $validated['cliente_telefono'] ?? '');
+            $metodoPago       = $this->sanitize($validated['presupuesto']['metodo_pago'] ?? '', 50);
 
             $ordenData = [
                 'folio' => $folio,
@@ -353,9 +431,9 @@ class OrdenController extends Controller
                 'estado' => 'Pendiente',
 
                 // Cliente
-                'cliente_nombre' => $validated['cliente_nombre'],
-                'cliente_email' => $validated['cliente_email'] ?? '',
-                'cliente_telefono' => $validated['cliente_telefono'] ?? '',
+                'cliente_nombre' => $clienteNombre,
+                'cliente_email' => $clienteEmail,
+                'cliente_telefono' => $clienteTelefono,
 
                 'cliente_uid' => $clienteUid,
                 'cliente_registrado' => $clienteUid !== null,
@@ -363,24 +441,24 @@ class OrdenController extends Controller
 
                 // Vehículo
                 'vehiculo' => [
-                    'marca' => $validated['vehiculo']['marca'],
-                    'modelo' => $validated['vehiculo']['modelo'],
+                    'marca' => $this->sanitize($validated['vehiculo']['marca'], 80),
+                    'modelo' => $this->sanitize($validated['vehiculo']['modelo'], 80),
                     'anio' => (int) $validated['vehiculo']['anio'],
-                    'color' => $validated['vehiculo']['color'] ?? '',
-                    'placas' => strtoupper($validated['vehiculo']['placas']),
+                    'color' => $this->sanitize($validated['vehiculo']['color'] ?? '', 50),
+                    'placas' => strtoupper($this->sanitize($validated['vehiculo']['placas'], 20)),
                     'kilometraje' => (int) ($validated['vehiculo']['kilometraje'] ?? 0),
                 ],
 
                 // Fallas
                 'fallas_multiples' => array_map(function ($f) {
                     return [
-                        'categoria' => $f['categoria'],
-                        'descripcion' => $f['descripcion'] ?? '',
+                        'categoria' => $this->sanitize($f['categoria'], 100),
+                        'descripcion' => $this->sanitize($f['descripcion'] ?? '', 500),
                         'prioridad' => $f['prioridad'],
                         'precio' => (float) $f['precio'],
                         'responsable' => !empty($f['responsable_id']) ? [
                             'id' => $f['responsable_id'],
-                            'nombre' => $f['responsable_nombre'] ?? '',
+                            'nombre' => $this->sanitize($f['responsable_nombre'] ?? '', 150),
                         ] : null,
                     ];
                 }, $validated['fallas']),
@@ -389,26 +467,22 @@ class OrdenController extends Controller
                 'presupuesto' => [
                     'anticipo' => $anticipo,
                     'costo_estimado' => $costoEstimado,
-                    'metodo_pago' => $validated['presupuesto']['metodo_pago'] ?? '',
+                    'metodo_pago' => $metodoPago,
                 ],
 
-                // Precios
                 'precio_final' => $precioFinal,
 
-                // Fechas
                 'fecha_orden' => $fechaOrden->toDateTimeString(),
                 'fecha_entrega_estimada' => $fechaEntrega->toDateTimeString(),
 
-                // Asignación de responsables
                 'asignacion' => [
                     'modo' => $validated['modo_asignacion'] ?? 'none',
                     'responsable_general' => !empty($validated['responsable_general_id']) ? [
                         'id' => $validated['responsable_general_id'],
-                        'nombre' => $validated['responsable_general_nombre'] ?? '',
+                        'nombre' => $this->sanitize($validated['responsable_general_nombre'] ?? '', 150),
                     ] : null,
                 ],
 
-                // Auditoría
                 'creado_por' => session('firebase_user.uid'),
                 'fecha_creacion' => now()->toDateTimeString(),
             ];
@@ -418,9 +492,7 @@ class OrdenController extends Controller
                 ->document($folio)
                 ->set($ordenData);
 
-            // ============================================================
-            // 🔔 NOTIFICAR AL CONDUCTOR (si existe en la plataforma)
-            // ============================================================
+            // ... resto igual (notificar al conductor)
             if ($clienteUid) {
                 try {
                     $tallerDoc = $this->firestoreDb->collection('talleres')->document($tallerId)->snapshot();
@@ -432,7 +504,7 @@ class OrdenController extends Controller
                     $notifService->crear($clienteUid, [
                         'tipo'          => 'orden_creada',
                         'titulo'        => 'Nuevo servicio registrado 📋',
-                        'mensaje'       => "{$tallerNombre} creó la orden {$folio} para tu {$validated['vehiculo']['marca']} {$validated['vehiculo']['modelo']} ({$validated['vehiculo']['placas']}). Sigue el progreso desde tu cuenta.",
+                        'mensaje'       => "{$tallerNombre} creó la orden {$folio} para tu {$ordenData['vehiculo']['marca']} {$ordenData['vehiculo']['modelo']} ({$ordenData['vehiculo']['placas']}). Sigue el progreso desde tu cuenta.",
                         'icono'         => 'fa-solid fa-clipboard-list',
                         'color'         => 'blue',
                         'taller_id'     => $tallerId,
@@ -662,46 +734,106 @@ class OrdenController extends Controller
         try {
             $validated = $request->validate([
                 // Cliente
-                'cliente_nombre' => 'required|string|max:150',
+                'cliente_nombre' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:150',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'cliente_email' => 'nullable|email|max:150',
-                'cliente_telefono' => 'nullable|string|max:20',
+                'cliente_telefono' => [
+                    'nullable',
+                    'string',
+                    'max:20',
+                    'regex:/^[\d\s\+\-\(\)]{7,20}$/',
+                ],
 
                 // Vehículo
-                'vehiculo.marca' => 'required|string|max:80',
-                'vehiculo.modelo' => 'required|string|max:80',
+                'vehiculo.marca' => [
+                    'required',
+                    'string',
+                    'max:80',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
+                'vehiculo.modelo' => [
+                    'required',
+                    'string',
+                    'max:80',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'vehiculo.anio' => 'required|integer|min:1900|max:' . (date('Y') + 1),
-                'vehiculo.color' => 'nullable|string|max:50',
-                'vehiculo.placas' => 'required|string|max:20',
+                'vehiculo.color' => [
+                    'nullable',
+                    'string',
+                    'max:50',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
+                'vehiculo.placas' => [
+                    'required',
+                    'string',
+                    'max:20',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'vehiculo.kilometraje' => 'nullable|integer|min:0',
 
                 // Fallas
                 'fallas' => 'required|array|min:1',
-                'fallas.*.categoria' => 'required|string|max:100',
-                'fallas.*.descripcion' => 'nullable|string|max:500',
+                'fallas.*.categoria' => [
+                    'required',
+                    'string',
+                    'max:100',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
+                'fallas.*.descripcion' => [
+                    'nullable',
+                    'string',
+                    'max:500',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'fallas.*.prioridad' => 'required|in:Baja,Media,Alta,Urgente',
                 'fallas.*.precio' => 'required|numeric|min:0',
 
                 // Presupuesto
                 'presupuesto.anticipo' => 'nullable|numeric|min:0',
-                'presupuesto.metodo_pago' => 'nullable|string|max:50',
+                'presupuesto.metodo_pago' => [
+                    'nullable',
+                    'string',
+                    'max:50',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
 
-                // Precio final editable
                 'precio_final' => 'nullable|numeric|min:0',
-
-                // Fecha
                 'fecha_entrega_estimada' => 'required|date',
-
-                // Estado (solo si es transición válida)
                 'estado' => 'required|in:' . implode(',', self::ESTADOS),
 
                 'modo_asignacion' => 'nullable|in:none,general,por_falla',
                 'responsable_general_id' => 'nullable|string|max:100',
-                'responsable_general_nombre' => 'nullable|string|max:150',
+                'responsable_general_nombre' => [
+                    'nullable',
+                    'string',
+                    'max:150',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
                 'fallas.*.responsable_id' => 'nullable|string|max:100',
-                'fallas.*.responsable_nombre' => 'nullable|string|max:150',
+                'fallas.*.responsable_nombre' => [
+                    'nullable',
+                    'string',
+                    'max:150',
+                    'regex:/^[^\<\>\{\}]*$/u',
+                ],
+            ], [
+                'cliente_nombre.regex' => 'El nombre del cliente contiene caracteres no permitidos.',
+                'cliente_telefono.regex' => 'El teléfono solo puede contener números, +, -, ( ) y espacios.',
+                'vehiculo.marca.regex' => 'La marca contiene caracteres no permitidos.',
+                'vehiculo.modelo.regex' => 'El modelo contiene caracteres no permitidos.',
+                'vehiculo.color.regex' => 'El color contiene caracteres no permitidos.',
+                'vehiculo.placas.regex' => 'Las placas contienen caracteres no permitidos.',
+                'fallas.*.categoria.regex' => 'La categoría de la falla contiene caracteres no permitidos.',
+                'fallas.*.descripcion.regex' => 'La descripción de la falla contiene caracteres no permitidos.',
             ]);
 
-            // Validación de fecha: no puede ser anterior a fecha_orden
+            // Validación de fecha
             $fechaOrden = \Carbon\Carbon::parse($ordenActual['fecha_orden'] ?? now());
             $fechaEntrega = \Carbon\Carbon::parse($validated['fecha_entrega_estimada']);
 
@@ -711,7 +843,7 @@ class OrdenController extends Controller
                 ]);
             }
 
-            // Validar transición de estado
+            // Validar transición
             $estadoActual = $ordenActual['estado'] ?? 'Pendiente';
             $estadoNuevo = $validated['estado'];
 
@@ -724,45 +856,44 @@ class OrdenController extends Controller
                 }
             }
 
-            // Calcular precio final sugerido
             $precioCalculado = 0;
             foreach ($validated['fallas'] as $falla) {
                 $precioCalculado += (float) $falla['precio'];
             }
 
-            // Si el usuario lo modifica, respetar; si no, usar el calculado
             $precioFinal = isset($validated['precio_final']) && $validated['precio_final'] !== null
                 ? (float) $validated['precio_final']
                 : $precioCalculado;
 
+            // 🔒 SANITIZACIÓN
             $updateData = [
-                'cliente_nombre' => $validated['cliente_nombre'],
-                'cliente_email' => $validated['cliente_email'] ?? '',
-                'cliente_telefono' => $validated['cliente_telefono'] ?? '',
+                'cliente_nombre' => $this->sanitize($validated['cliente_nombre'], 150),
+                'cliente_email' => filter_var($validated['cliente_email'] ?? '', FILTER_VALIDATE_EMAIL) ?: '',
+                'cliente_telefono' => preg_replace('/[^\d\s\+\-\(\)]/', '', $validated['cliente_telefono'] ?? ''),
                 'vehiculo' => [
-                    'marca' => $validated['vehiculo']['marca'],
-                    'modelo' => $validated['vehiculo']['modelo'],
+                    'marca' => $this->sanitize($validated['vehiculo']['marca'], 80),
+                    'modelo' => $this->sanitize($validated['vehiculo']['modelo'], 80),
                     'anio' => (int) $validated['vehiculo']['anio'],
-                    'color' => $validated['vehiculo']['color'] ?? '',
-                    'placas' => strtoupper($validated['vehiculo']['placas']),
+                    'color' => $this->sanitize($validated['vehiculo']['color'] ?? '', 50),
+                    'placas' => strtoupper($this->sanitize($validated['vehiculo']['placas'], 20)),
                     'kilometraje' => (int) ($validated['vehiculo']['kilometraje'] ?? 0),
                 ],
                 'fallas_multiples' => array_map(function ($f) {
                     return [
-                        'categoria' => $f['categoria'],
-                        'descripcion' => $f['descripcion'] ?? '',
+                        'categoria' => $this->sanitize($f['categoria'], 100),
+                        'descripcion' => $this->sanitize($f['descripcion'] ?? '', 500),
                         'prioridad' => $f['prioridad'],
                         'precio' => (float) $f['precio'],
                         'responsable' => !empty($f['responsable_id']) ? [
                             'id' => $f['responsable_id'],
-                            'nombre' => $f['responsable_nombre'] ?? '',
+                            'nombre' => $this->sanitize($f['responsable_nombre'] ?? '', 150),
                         ] : null,
                     ];
                 }, $validated['fallas']),
                 'presupuesto' => [
                     'anticipo' => (float) ($validated['presupuesto']['anticipo'] ?? 0),
                     'costo_estimado' => $precioCalculado,
-                    'metodo_pago' => $validated['presupuesto']['metodo_pago'] ?? '',
+                    'metodo_pago' => $this->sanitize($validated['presupuesto']['metodo_pago'] ?? '', 50),
                 ],
                 'precio_final' => $precioFinal,
                 'estado' => $estadoNuevo,
@@ -772,7 +903,7 @@ class OrdenController extends Controller
                     'modo' => $validated['modo_asignacion'] ?? 'none',
                     'responsable_general' => !empty($validated['responsable_general_id']) ? [
                         'id' => $validated['responsable_general_id'],
-                        'nombre' => $validated['responsable_general_nombre'] ?? '',
+                        'nombre' => $this->sanitize($validated['responsable_general_nombre'] ?? '', 150),
                     ] : null,
                 ],
             ];
@@ -783,8 +914,6 @@ class OrdenController extends Controller
                 if (empty($ordenActual['fecha_entrega_real'])) {
                     $updateData['fecha_entrega_real'] = now()->toDateTimeString();
                 }
-
-                // Solo si ANTES no estaba listo
                 if (($ordenActual['estado'] ?? '') !== 'Listo') {
                     $acabaDePasarAListo = true;
                 }
@@ -795,7 +924,6 @@ class OrdenController extends Controller
                 ->document($id)
                 ->set($updateData, ['merge' => true]);
 
-            // 📧 Enviar email de solicitud de calificación
             if ($acabaDePasarAListo) {
                 try {
                     $ordenActualizada = array_merge($ordenActual, $updateData);

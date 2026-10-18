@@ -122,8 +122,9 @@
             @foreach ($personal as $persona)
                 @php
                     $activo = $persona['activo'] ?? true;
+                    $nombreLimpio = strip_tags($persona['nombre'] ?? 'U');
                     $iniciales = '';
-                    foreach (preg_split('/\s+/', trim($persona['nombre'] ?? 'U')) as $p) {
+                    foreach (preg_split('/\s+/', trim($nombreLimpio)) as $p) {
                         if (!empty($p)) {
                             $iniciales .= mb_strtoupper(mb_substr($p, 0, 1));
                         }
@@ -161,9 +162,13 @@
                             {{ $iniciales }}
                         </div>
                         <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-gray-900 truncate">{{ $persona['nombre'] ?? 'Sin nombre' }}</h3>
+                            <h3 class="font-bold text-gray-900 truncate">
+                                {{ Str::limit(strip_tags($persona['nombre'] ?? 'Sin nombre'), 80) }}
+                            </h3>
                             @if (!empty($persona['puesto']))
-                                <p class="text-xs text-gray-500 truncate">{{ $persona['puesto'] }}</p>
+                                <p class="text-xs text-gray-500 truncate">
+                                    {{ Str::limit(strip_tags($persona['puesto'] ?? ''), 60) }}
+                                </p>
                             @endif
                         </div>
                     </div>
@@ -173,26 +178,27 @@
                         @if (!empty($persona['especialidad']))
                             <p class="text-xs text-gray-600 flex items-center gap-2 truncate">
                                 <i class="fa-solid fa-screwdriver-wrench text-brand-orange text-[11px]"></i>
-                                <span class="truncate">{{ $persona['especialidad'] }}</span>
+                                <span
+                                    class="truncate">{{ Str::limit(strip_tags($persona['especialidad'] ?? ''), 80) }}</span>
                             </p>
                         @endif
                         @if (!empty($persona['telefono']))
                             <p class="text-xs text-gray-600 flex items-center gap-2 truncate">
                                 <i class="fa-solid fa-phone text-brand-blue text-[11px]"></i>
-                                {{ $persona['telefono'] }}
+                                {{ Str::limit(strip_tags($persona['telefono'] ?? ''), 30) }}
                             </p>
                         @endif
                         @if (!empty($persona['email']))
                             <p class="text-xs text-gray-600 flex items-center gap-2 truncate">
                                 <i class="fa-solid fa-envelope text-brand-blue text-[11px]"></i>
-                                <span class="truncate">{{ $persona['email'] }}</span>
+                                <span class="truncate">{{ Str::limit(strip_tags($persona['email'] ?? ''), 100) }}</span>
                             </p>
                         @endif
                     </div>
 
                     @if (!empty($persona['notas']))
                         <p class="text-[11px] text-gray-400 italic line-clamp-2 mb-3">
-                            "{{ $persona['notas'] }}"
+                            "{{ Str::limit(strip_tags($persona['notas'] ?? ''), 200) }}"
                         </p>
                     @endif
 
@@ -200,12 +206,13 @@
                     <div class="flex items-center gap-2 pt-3 border-t border-gray-100">
                         <button type="button"
                             class="btn-editar flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-brand-blue hover:text-white text-gray-700 rounded-lg text-xs font-semibold transition"
-                            data-persona='@json($persona)'>
+                            data-persona='@json($persona, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)'>
                             <i class="fa-solid fa-pen text-[10px]"></i> Editar
                         </button>
                         <button type="button"
                             class="btn-eliminar w-9 h-9 inline-flex items-center justify-center bg-gray-100 hover:bg-red-500 hover:text-white text-gray-600 rounded-lg transition"
-                            data-id="{{ $persona['id'] }}" data-nombre="{{ $persona['nombre'] ?? 'miembro' }}"
+                            data-id="{{ $persona['id'] }}"
+                            data-nombre="{{ Str::limit(strip_tags($persona['nombre'] ?? 'miembro'), 80) }}"
                             title="Eliminar">
                             <i class="fa-solid fa-trash text-xs"></i>
                         </button>
@@ -449,6 +456,75 @@
                         setTimeout(() => toast.remove(), 500);
                     }, 3000);
                 }
+
+                // ============================================================
+                // SANITIZACIÓN ANTI-XSS (mismo patrón)
+                // ============================================================
+                function sanitizeTextInput(value) {
+                    if (typeof value !== 'string') return '';
+                    return value
+                        .replace(/<[^>]*>/g, '')
+                        .replace(/[<>{}]/g, '')
+                        .replace(/javascript:/gi, '')
+                        .replace(/on\w+\s*=/gi, '')
+                        .replace(/[\u0000-\u001F\u007F]/g, '')
+                        .trim();
+                }
+
+                // Aplicar a inputs de texto y textarea del form del modal
+                document.querySelectorAll(
+                    '#form-personal input[type="text"], #form-personal textarea'
+                ).forEach(el => {
+                    el.addEventListener('paste', function(e) {
+                        const texto = (e.clipboardData || window.clipboardData).getData('text');
+                        if (/[<>{}]|javascript:|on\w+\s*=/i.test(texto)) {
+                            e.preventDefault();
+                            document.execCommand('insertText', false, sanitizeTextInput(texto));
+                        }
+                    });
+
+                    el.addEventListener('input', function() {
+                        if (this.dataset.sanitizing === '1') return;
+                        const original = this.value;
+                        const limpio = sanitizeTextInput(original);
+                        if (limpio !== original) {
+                            this.dataset.sanitizing = '1';
+                            const pos = this.selectionStart - (original.length - limpio.length);
+                            this.value = limpio;
+                            this.setSelectionRange(Math.max(0, pos), Math.max(0, pos));
+                            this.dataset.sanitizing = '0';
+                        }
+                    });
+
+                    el.addEventListener('blur', function() {
+                        if (/[<>{}]/.test(this.value)) {
+                            this.value = sanitizeTextInput(this.value);
+                        }
+                    });
+                });
+
+                // Validación final al submit
+                form?.addEventListener('submit', function(e) {
+                    const errores = [];
+                    const nombre = document.getElementById('input-nombre');
+                    const telefono = document.getElementById('input-telefono');
+
+                    if (nombre && /[<>{}]/.test(nombre.value)) {
+                        errores.push('El nombre contiene caracteres no permitidos (< > { }).');
+                    }
+                    if (nombre && nombre.value.trim().length < 2) {
+                        errores.push('El nombre es demasiado corto.');
+                    }
+                    if (telefono && telefono.value && !/^[\d\s\+\-\(\)\.ext]{7,30}$/i.test(telefono.value)) {
+                        errores.push('El teléfono solo puede contener números, +, -, ( ), . y "ext".');
+                    }
+
+                    if (errores.length > 0) {
+                        e.preventDefault();
+                        alert(errores.join('\n'));
+                        return false;
+                    }
+                });
             });
         </script>
     @endpush

@@ -57,6 +57,19 @@ class PersonalController extends Controller
         }
     } */
 
+    // ============================================================
+    // HELPER DE SANITIZACIÓN (anti XSS / script injection)
+    // ============================================================
+    private function sanitize(string $value, int $max = 2000): string
+    {
+        $value = strip_tags($value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
+        $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = str_replace(['<', '>', '{', '}'], '', $value);
+        $value = preg_replace('/\s+/u', ' ', trim($value));
+        return mb_substr($value, 0, $max);
+    }
+
     private function obtenerTallerIdDelUsuario()
     {
         $user = session('firebase_user');
@@ -160,31 +173,62 @@ class PersonalController extends Controller
         }
 
         $validated = $request->validate([
-            'nombre' => 'required|string|max:150',
-            'especialidad' => 'nullable|string|max:150',
-            'puesto' => 'nullable|string|max:100',
-            'telefono' => 'nullable|string|max:30',
+            'nombre' => [
+                'required',
+                'string',
+                'min:2',
+                'max:150',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'especialidad' => [
+                'nullable',
+                'string',
+                'max:150',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'puesto' => [
+                'nullable',
+                'string',
+                'max:100',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'telefono' => [
+                'nullable',
+                'string',
+                'max:30',
+                'regex:/^[\d\s\+\-\(\)\.ext]{7,30}$/i',
+            ],
             'email' => 'nullable|email|max:150',
-            'notas' => 'nullable|string|max:500',
+            'notas' => [
+                'nullable',
+                'string',
+                'max:500',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
+            'nombre.regex' => 'El nombre contiene caracteres no permitidos (<, >, {, }).',
+            'especialidad.regex' => 'La especialidad contiene caracteres no permitidos.',
+            'puesto.regex' => 'El puesto contiene caracteres no permitidos.',
+            'telefono.regex' => 'El teléfono solo puede contener números, +, -, ( ), . y "ext".',
+            'notas.regex' => 'Las notas contienen caracteres no permitidos.',
         ]);
 
         try {
+            // 🔒 Sanitización (defensa en profundidad)
             $data = [
-                'nombre' => trim($validated['nombre']),
-                'especialidad' => trim($validated['especialidad'] ?? ''),
-                'puesto' => trim($validated['puesto'] ?? ''),
-                'telefono' => trim($validated['telefono'] ?? ''),
-                'email' => trim($validated['email'] ?? ''),
-                'notas' => trim($validated['notas'] ?? ''),
+                'nombre' => $this->sanitize($validated['nombre'], 150),
+                'especialidad' => $this->sanitize($validated['especialidad'] ?? '', 150),
+                'puesto' => $this->sanitize($validated['puesto'] ?? '', 100),
+                'telefono' => preg_replace('/[^\d\s\+\-\(\)\.ext]/i', '', $validated['telefono'] ?? ''),
+                'email' => filter_var($validated['email'] ?? '', FILTER_VALIDATE_EMAIL) ?: '',
+                'notas' => $this->sanitize($validated['notas'] ?? '', 500),
                 'activo' => true,
                 'fecha_registro' => now()->toDateTimeString(),
                 'registrado_por' => session('firebase_user.uid'),
             ];
 
             $personalId = 'persona_' . uniqid();
-
             $data['id'] = $personalId;
 
             $this->firestoreDb
@@ -212,12 +256,44 @@ class PersonalController extends Controller
         }
 
         $validated = $request->validate([
-            'nombre' => 'required|string|max:150',
-            'especialidad' => 'nullable|string|max:150',
-            'puesto' => 'nullable|string|max:100',
-            'telefono' => 'nullable|string|max:30',
+            'nombre' => [
+                'required',
+                'string',
+                'min:2',
+                'max:150',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'especialidad' => [
+                'nullable',
+                'string',
+                'max:150',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'puesto' => [
+                'nullable',
+                'string',
+                'max:100',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'telefono' => [
+                'nullable',
+                'string',
+                'max:30',
+                'regex:/^[\d\s\+\-\(\)\.ext]{7,30}$/i',
+            ],
             'email' => 'nullable|email|max:150',
-            'notas' => 'nullable|string|max:500',
+            'notas' => [
+                'nullable',
+                'string',
+                'max:500',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+        ], [
+            'nombre.regex' => 'El nombre contiene caracteres no permitidos (<, >, {, }).',
+            'especialidad.regex' => 'La especialidad contiene caracteres no permitidos.',
+            'puesto.regex' => 'El puesto contiene caracteres no permitidos.',
+            'telefono.regex' => 'El teléfono solo puede contener números, +, -, ( ), . y "ext".',
+            'notas.regex' => 'Las notas contienen caracteres no permitidos.',
         ]);
 
         try {
@@ -231,13 +307,14 @@ class PersonalController extends Controller
                 return back()->with('error', 'Miembro no encontrado.');
             }
 
+            // 🔒 Sanitización
             $ref->set([
-                'nombre' => trim($validated['nombre']),
-                'especialidad' => trim($validated['especialidad'] ?? ''),
-                'puesto' => trim($validated['puesto'] ?? ''),
-                'telefono' => trim($validated['telefono'] ?? ''),
-                'email' => trim($validated['email'] ?? ''),
-                'notas' => trim($validated['notas'] ?? ''),
+                'nombre' => $this->sanitize($validated['nombre'], 150),
+                'especialidad' => $this->sanitize($validated['especialidad'] ?? '', 150),
+                'puesto' => $this->sanitize($validated['puesto'] ?? '', 100),
+                'telefono' => preg_replace('/[^\d\s\+\-\(\)\.ext]/i', '', $validated['telefono'] ?? ''),
+                'email' => filter_var($validated['email'] ?? '', FILTER_VALIDATE_EMAIL) ?: '',
+                'notas' => $this->sanitize($validated['notas'] ?? '', 500),
                 'fecha_actualizacion' => now()->toDateTimeString(),
             ], ['merge' => true]);
 

@@ -16,7 +16,7 @@ class ComentarioController extends Controller
     {
         $this->firestoreDb = $firestoreDb;
     }
-    
+
     /* public function __construct()
     {
         try {
@@ -55,6 +55,19 @@ class ComentarioController extends Controller
         }
     } */
 
+    // ============================================================
+    // HELPER DE SANITIZACIÓN (anti XSS / script injection)
+    // ============================================================
+    private function sanitize(string $value, int $max = 2000): string
+    {
+        $value = strip_tags($value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
+        $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = str_replace(['<', '>', '{', '}'], '', $value);
+        $value = preg_replace('/\s+/u', ' ', trim($value));
+        return mb_substr($value, 0, $max);
+    }
+
     /**
      * Lista todas las reseñas del taller con estadísticas.
      */
@@ -92,6 +105,17 @@ class ComentarioController extends Controller
                 if ($doc->exists()) {
                     $r = $doc->data();
                     $r['id'] = $doc->id();
+
+                    if (isset($r['comentario'])) {
+                        $r['comentario'] = strip_tags($r['comentario']);
+                    }
+                    if (isset($r['respuesta_taller']) && $r['respuesta_taller'] !== null) {
+                        $r['respuesta_taller'] = strip_tags($r['respuesta_taller']);
+                    }
+                    if (isset($r['usuario_nombre'])) {
+                        $r['usuario_nombre'] = strip_tags($r['usuario_nombre']);
+                    }
+
                     $resenas[] = $r;
                 }
             }
@@ -171,11 +195,18 @@ class ComentarioController extends Controller
         }
 
         $validated = $request->validate([
-            'respuesta' => 'required|string|min:3|max:1000',
+            'respuesta' => [
+                'required',
+                'string',
+                'min:3',
+                'max:1000',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
         ], [
             'respuesta.required' => 'La respuesta no puede estar vacía.',
             'respuesta.min' => 'La respuesta debe tener al menos 3 caracteres.',
             'respuesta.max' => 'La respuesta no puede superar los 1000 caracteres.',
+            'respuesta.regex' => 'La respuesta contiene caracteres no permitidos (<, >, {, }).',
         ]);
 
         $tallerId = $this->obtenerTallerIdActual();
@@ -195,9 +226,17 @@ class ComentarioController extends Controller
                 return back()->with('error', 'Reseña no encontrada.');
             }
 
+            // 🔒 Sanitización (defensa en profundidad)
+            $respuestaLimpia = $this->sanitize($validated['respuesta'], 1000);
+
+            // Si después de sanitizar quedó vacía, rechazar
+            if (mb_strlen(trim($respuestaLimpia)) < 3) {
+                return back()->with('error', 'La respuesta no es válida después de limpiar caracteres no permitidos.');
+            }
+
             $resenaRef->set([
-                'respuesta_taller' => trim($validated['respuesta']),
-                'respuesta_fecha' => Carbon::now()->toIso8601String(),
+                'respuesta_taller' => $respuestaLimpia,
+                'respuesta_fecha'  => Carbon::now()->toIso8601String(),
             ], ['merge' => true]);
 
             $resenaData = $resenaDoc->data();
@@ -215,7 +254,7 @@ class ComentarioController extends Controller
                     $tallerId,
                     $tallerNombre,
                     $resenaId,
-                    $validated['respuesta']
+                    $respuestaLimpia
                 );
             }
 

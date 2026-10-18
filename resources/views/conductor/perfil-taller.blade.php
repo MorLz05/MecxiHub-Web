@@ -10,8 +10,7 @@
     $hayUbicacion = !empty($taller['latitud']) && !empty($taller['longitud']);
 @endphp
 
-@section('title', ($taller['nombre'] ?? 'Taller') . ' - MecxiHub')
-
+@section('title', Str::limit(strip_tags($taller['nombre'] ?? 'Taller'), 60) . ' - MecxiHub')
 @section('content')
     <!-- HERO -->
     <section class="relative bg-[#002677] text-white pt-10 pb-28 px-4 sm:px-8 overflow-hidden">
@@ -45,20 +44,23 @@
                         <i class="fa-solid fa-chevron-right text-xs"></i>
                         <a href="{{ route('buscar.talleres') }}" class="hover:text-white transition">Buscar talleres</a>
                         <i class="fa-solid fa-chevron-right text-xs"></i>
-                        <span class="text-white font-medium">{{ $taller['nombre'] }}</span>
+                        <span class="text-white font-medium">
+                            {{ Str::limit(strip_tags($taller['nombre'] ?? ''), 80) }}
+                        </span>
                     </nav>
 
                     <div class="flex flex-col sm:flex-row items-start gap-6">
                         <div class="flex-shrink-0">
                             <div
                                 class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white p-2 shadow-xl border-2 border-white/30 flex items-center justify-center overflow-hidden">
-                                @if ($logoUrl)
-                                    <img src="{{ $logoUrl }}" alt="{{ $taller['nombre'] }}"
+                                @if ($logoUrl && Str::startsWith($logoUrl, ['http://', 'https://']))
+                                    <img src="{{ $logoUrl }}"
+                                        alt="{{ Str::limit(strip_tags($taller['nombre'] ?? ''), 80) }}"
                                         class="w-full h-full object-contain">
                                 @else
                                     <div
                                         class="w-full h-full rounded-xl bg-gradient-to-br from-[#0039A6] to-[#001B5E] flex items-center justify-center text-white font-black text-3xl">
-                                        {{ mb_strtoupper(mb_substr($taller['nombre'], 0, 2)) }}
+                                        {{ Str::limit(mb_strtoupper(mb_substr(strip_tags($taller['nombre'] ?? 'T'), 0, 2)), 2) }}
                                     </div>
                                 @endif
                             </div>
@@ -67,7 +69,7 @@
                         <div class="space-y-3">
                             <div class="flex items-center gap-3 flex-wrap">
                                 <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">
-                                    {{ $taller['nombre'] }}
+                                    {{ Str::limit(strip_tags($taller['nombre'] ?? ''), 100) }}
                                 </h1>
                                 @if ($taller['verificado'])
                                     <span
@@ -98,8 +100,7 @@
                                     <span class="text-blue-300/50">|</span>
                                     <span class="flex items-center gap-2 text-blue-100 text-sm">
                                         <i class="fa-solid fa-location-dot text-[#FF6B00]"></i>
-                                        {{ $taller['direccion'] }}
-                                    </span>
+                                        {{ Str::limit(strip_tags($taller['direccion'] ?? ''), 200) }} </span>
                                 @endif
                             </div>
 
@@ -108,8 +109,7 @@
                                     @foreach ($especialidades as $esp)
                                         <span
                                             class="text-xs bg-white/15 backdrop-blur-sm text-white px-3 py-1.5 rounded-full font-medium border border-white/20">
-                                            {{ $esp }}
-                                        </span>
+                                            {{ Str::limit(strip_tags($esp), 40) }} </span>
                                     @endforeach
                                 </div>
                             @endif
@@ -150,7 +150,8 @@
                             <span class="w-1.5 h-7 bg-[#FF6B00] rounded-full"></span>
                             <h2 class="text-2xl font-bold text-gray-900">Sobre el taller</h2>
                         </div>
-                        <div class="text-gray-600 leading-relaxed whitespace-pre-line">{{ $taller['descripcion'] }}</div>
+                        <div class="text-gray-600 leading-relaxed whitespace-pre-line">
+                            {{ Str::limit(strip_tags($taller['descripcion'] ?? ''), 2000) }}</div>
                     </div>
                 @endif
 
@@ -177,7 +178,9 @@
 
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-start justify-between gap-3 flex-wrap">
-                                            <h3 class="font-bold text-gray-900 text-base">{{ $servicio['nombre'] }}</h3>
+                                            <h3 class="font-bold text-gray-900 text-base">
+                                                {{ Str::limit(strip_tags($servicio['nombre'] ?? ''), 100) }}
+                                            </h3>
                                             @if (!empty($servicio['precio']))
                                                 <p class="text-xs font-semibold text-gray-700">
                                                     <i class="fa-solid fa-dollar-sign text-[#FF8800]"></i>
@@ -187,7 +190,8 @@
                                         </div>
                                         @if (!empty($servicio['descripcion']))
                                             <p class="text-gray-500 text-sm mt-1 leading-relaxed">
-                                                {{ $servicio['descripcion'] }}</p>
+                                                {{ Str::limit(strip_tags($servicio['descripcion'] ?? ''), 500) }}
+                                            </p>
                                         @endif
                                     </div>
                                 </div>
@@ -445,7 +449,7 @@
                                     class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
                                     Tu comentario
                                 </label>
-                                <textarea name="comentario" id="comentario" rows="4" maxlength="1000"
+                                <textarea name="comentario" id="comentario" rows="4" minlength="10" maxlength="1000" required
                                     placeholder="Cuéntanos tu experiencia con este taller..."
                                     class="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-[#0039A6] focus:ring-2 focus:ring-blue-100 resize-none">{{ old('comentario') }}</textarea>
                                 @error('comentario')
@@ -546,7 +550,9 @@
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500">Teléfono</p>
-                                    <p class="font-semibold text-gray-900 text-sm">{{ $taller['telefono'] }}</p>
+                                    <p class="font-semibold text-gray-900 text-sm">
+                                        {{ Str::limit(strip_tags($taller['telefono'] ?? ''), 30) }}
+                                    </p>
                                 </div>
                             </div>
                         @endif
@@ -618,7 +624,7 @@
                 new google.maps.marker.AdvancedMarkerElement({
                     map: map,
                     position: pos,
-                    title: @json($taller['nombre']),
+                    title: @json(strip_tags($taller['nombre'] ?? ''), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT),
                 });
             }
 
@@ -640,6 +646,69 @@
                         }), 300);
                     }
                 @endif
+            });
+
+            // ============================================================
+            // SANITIZACIÓN ANTI-XSS (formulario de reseña)
+            // ============================================================
+            function sanitizeTextInput(value) {
+                if (typeof value !== 'string') return '';
+                return value
+                    .replace(/<[^>]*>/g, '')
+                    .replace(/[<>{}]/g, '')
+                    .replace(/javascript:/gi, '')
+                    .replace(/on\w+\s*=/gi, '')
+                    .replace(/[\u0000-\u001F\u007F]/g, '')
+                    .trim();
+            }
+
+            const textareaComentario = document.getElementById('comentario');
+            if (textareaComentario) {
+                textareaComentario.addEventListener('paste', function(e) {
+                    const texto = (e.clipboardData || window.clipboardData).getData('text');
+                    if (/[<>{}]|javascript:|on\w+\s*=/i.test(texto)) {
+                        e.preventDefault();
+                        document.execCommand('insertText', false, sanitizeTextInput(texto));
+                    }
+                });
+
+                textareaComentario.addEventListener('input', function() {
+                    if (this.dataset.sanitizing === '1') return;
+                    const original = this.value;
+                    const limpio = sanitizeTextInput(original);
+                    if (limpio !== original) {
+                        this.dataset.sanitizing = '1';
+                        const pos = this.selectionStart - (original.length - limpio.length);
+                        this.value = limpio;
+                        this.setSelectionRange(Math.max(0, pos), Math.max(0, pos));
+                        this.dataset.sanitizing = '0';
+                    }
+                });
+
+                textareaComentario.addEventListener('blur', function() {
+                    if (/[<>{}]/.test(this.value)) {
+                        this.value = sanitizeTextInput(this.value);
+                    }
+                });
+            }
+
+            // Validación al submit del formulario de reseña
+            document.querySelector('form[action*="resena.store"]')?.addEventListener('submit', function(e) {
+                const errores = [];
+                const txt = document.getElementById('comentario');
+
+                if (txt && /[<>{}]/.test(txt.value)) {
+                    errores.push('El comentario contiene caracteres no permitidos (< > { }).');
+                }
+                if (txt && txt.value.trim().length < 10) {
+                    errores.push('El comentario debe tener al menos 10 caracteres.');
+                }
+
+                if (errores.length > 0) {
+                    e.preventDefault();
+                    alert(errores.join('\n'));
+                    return false;
+                }
             });
 
             // Toggle "Ver más reseñas"

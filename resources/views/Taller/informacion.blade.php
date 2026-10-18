@@ -174,8 +174,10 @@
                                         <span class="absolute left-4 text-gray-400">
                                             <i class="fa-solid fa-phone"></i>
                                         </span>
-                                        <input type="number" id="telefono" name="telefono"
+                                        <input type="tel" id="telefono" name="telefono"
                                             value="{{ old('telefono', $tallerData['telefono'] ?? '') }}" required
+                                            maxlength="20" pattern="[\d\s\+\-\(\)]{7,20}"
+                                            title="Solo números, +, -, ( ) y espacios"
                                             class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-[#0066FF] focus:ring-4 focus:ring-blue-100 text-gray-800 placeholder-gray-400 text-base bg-gray-50/50 transition duration-200">
                                     </div>
                                 </div>
@@ -354,7 +356,7 @@
                                         <div
                                             class="group relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
                                             <img src="{{ $img['url'] }}"
-                                                alt="{{ $img['nombre_original'] ?? 'Imagen' }}"
+                                                alt="{{ Str::limit(strip_tags($img['nombre_original'] ?? 'Imagen'), 80) }}"
                                                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
 
                                             <div
@@ -650,15 +652,15 @@
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-2">
                                                 <span
-                                                    class="text-sm font-medium text-gray-900 truncate">{{ $servicio['nombre'] ?? 'Sin nombre' }}</span>
+                                                    class="text-sm font-medium text-gray-900 truncate">{{ Str::limit(strip_tags($servicio['nombre'] ?? 'Sin nombre'), 60) }}</span>
                                                 <span
                                                     class="text-xs px-2 py-0.5 rounded-full {{ $servicio['activo'] ?? true ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-500' }}">
                                                     {{ $servicio['activo'] ?? true ? 'Activo' : 'Inactivo' }}
                                                 </span>
                                             </div>
                                             @if (!empty($servicio['descripcion']))
-                                                <p class="text-xs text-gray-500 truncate">{{ $servicio['descripcion'] }}
-                                                </p>
+                                                <p class="text-xs text-gray-500 truncate">
+                                                    {{ Str::limit(strip_tags($servicio['descripcion'] ?? ''), 80) }}</p>
                                             @endif
                                             @if (!empty($servicio['precio']))
                                                 <p class="text-xs font-semibold text-gray-700">
@@ -1579,6 +1581,89 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && !modalMapa.classList.contains('hidden')) {
                     cerrarModalMapa();
+                }
+            });
+
+            // ============================================================
+            // SANITIZACIÓN DE INPUTS EN TIEMPO REAL (anti XSS / script injection)
+            // ============================================================
+            function sanitizeTextInput(value) {
+                if (typeof value !== 'string') return '';
+                return value
+                    .replace(/<[^>]*>/g, '') // eliminar etiquetas HTML
+                    .replace(/[<>{}]/g, '') // eliminar < > { }
+                    .replace(/javascript:/gi, '') // eliminar pseudo-protocolo
+                    .replace(/on\w+\s*=/gi, '') // eliminar onerror=, onload=, etc.
+                    .replace(/[\u0000-\u001F\u007F]/g, '') // caracteres de control
+                    .trim();
+            }
+
+            // Aplicar a todos los inputs de texto del formulario del taller
+            document.querySelectorAll(
+                'input[type="text"], textarea, input[name="nombre"], input[name="descripcion"], input[name="direccion"], input[name="telefono"], input[name="precio"]'
+            ).forEach(el => {
+                // Bloquear el pegado de HTML/scripts
+                el.addEventListener('paste', function(e) {
+                    const texto = (e.clipboardData || window.clipboardData).getData('text');
+                    if (/[<>{}]|javascript:|on\w+\s*=/i.test(texto)) {
+                        e.preventDefault();
+                        const limpio = sanitizeTextInput(texto);
+                        document.execCommand('insertText', false, limpio);
+                    }
+                });
+
+                // Limpiar mientras escribe
+                el.addEventListener('input', function() {
+                    if (this.dataset.sanitizing === '1') return;
+                    const original = this.value;
+                    const limpio = sanitizeTextInput(original);
+                    if (limpio !== original) {
+                        this.dataset.sanitizing = '1';
+                        const pos = this.selectionStart - (original.length - limpio.length);
+                        this.value = limpio;
+                        this.setSelectionRange(Math.max(0, pos), Math.max(0, pos));
+                        this.dataset.sanitizing = '0';
+                    }
+                });
+
+                // Validación al salir del campo
+                el.addEventListener('blur', function() {
+                    if (/[<>{}]/.test(this.value)) {
+                        this.value = sanitizeTextInput(this.value);
+                    }
+                });
+            });
+
+            // Validación antes de enviar el formulario de info básica
+            document.querySelector('form[action*="informacion.update"]')?.addEventListener('submit', function(e) {
+                const nombre = document.getElementById('nombre');
+                const telefono = document.getElementById('telefono');
+                const errores = [];
+
+                if (nombre && /[<>{}]/.test(nombre.value)) {
+                    errores.push('El nombre contiene caracteres no permitidos (< > { }).');
+                }
+                if (nombre && nombre.value.trim().length < 2) {
+                    errores.push('El nombre del taller es demasiado corto.');
+                }
+                if (telefono && !/^[\d\s\+\-\(\)]{7,20}$/.test(telefono.value)) {
+                    errores.push('El teléfono solo puede contener números, +, -, ( ) y espacios.');
+                }
+
+                if (errores.length > 0) {
+                    e.preventDefault();
+                    alert(errores.join('\n'));
+                    return false;
+                }
+            });
+
+            // Validación antes de agregar servicio
+            document.querySelector('form[action*="servicio.agregar"]')?.addEventListener('submit', function(e) {
+                const nombre = this.querySelector('input[name="nombre"]');
+                if (nombre && /[<>{}]/.test(nombre.value)) {
+                    e.preventDefault();
+                    alert('El nombre del servicio contiene caracteres no permitidos (< > { }).');
+                    return false;
                 }
             });
         });

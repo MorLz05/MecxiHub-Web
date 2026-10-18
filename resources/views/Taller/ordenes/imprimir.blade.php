@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orden {{ $orden['folio'] ?? '' }} - {{ $tallerData['nombre'] ?? 'Taller' }}</title>
+    <title>Orden {{ Str::limit(strip_tags($orden['folio'] ?? ''), 40) }} -
+        {{ Str::limit(strip_tags($tallerData['nombre'] ?? 'Taller'), 80) }}</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
@@ -424,7 +425,7 @@
     </div>
 
     @php
-        $tallerNombre = $tallerData['nombre'] ?? 'Mi Taller';
+        $tallerNombre = strip_tags($tallerData['nombre'] ?? 'Mi Taller');
         $tallerDireccion = $tallerData['direccion'] ?? null;
         $tallerTelefono = $tallerData['telefono'] ?? null;
         $tallerEmail = $tallerData['email'] ?? null;
@@ -458,23 +459,23 @@
         {{-- ENCABEZADO --}}
         <div class="hoja-header">
             <div class="hoja-logo">
-                @if (!empty($tallerLogo))
-                    <img src="{{ $tallerLogo }}" alt="{{ $tallerNombre }}">
+                @if (!empty($tallerLogo) && Str::startsWith($tallerLogo, ['http://', 'https://']))
+                    <img src="{{ $tallerLogo }}" alt="{{ Str::limit(strip_tags($tallerNombre), 80) }}">
                 @else
                     <div class="hoja-logo-fallback">{{ $iniciales }}</div>
                 @endif
             </div>
 
             <div class="hoja-taller-info">
-                <h1>{{ $tallerNombre }}</h1>
+                <h1>{{ Str::limit(strip_tags($tallerNombre), 80) }}</h1>
                 @if ($tallerDireccion)
-                    <p><i class="fa-solid fa-location-dot"></i> {{ $tallerDireccion }}</p>
+                    <p><i class="fa-solid fa-location-dot"></i> {{ Str::limit(strip_tags($tallerDireccion), 200) }}</p>
                 @endif
                 @if ($tallerTelefono)
-                    <p><i class="fa-solid fa-phone"></i> {{ $tallerTelefono }}</p>
+                    <p><i class="fa-solid fa-phone"></i> {{ Str::limit(strip_tags($tallerTelefono), 20) }}</p>
                 @endif
                 @if ($tallerEmail)
-                    <p><i class="fa-solid fa-envelope"></i> {{ $tallerEmail }}</p>
+                    <p><i class="fa-solid fa-envelope"></i> {{ Str::limit(strip_tags($tallerEmail), 150) }}</p>
                 @endif
             </div>
 
@@ -495,18 +496,18 @@
                     <table class="hoja-tabla-datos">
                         <tr>
                             <td class="hoja-label">Nombre:</td>
-                            <td>{{ $orden['cliente_nombre'] ?? '-' }}</td>
+                            <td>{{ Str::limit(strip_tags($orden['cliente_nombre'] ?? '-'), 150) }}</td>
                         </tr>
                         @if (!empty($orden['cliente_telefono']))
                             <tr>
                                 <td class="hoja-label">Teléfono:</td>
-                                <td>{{ $orden['cliente_telefono'] }}</td>
+                                <td>{{ Str::limit(strip_tags($orden['cliente_telefono'] ?? ''), 20) }}</td>
                             </tr>
                         @endif
                         @if (!empty($orden['cliente_email']))
                             <tr>
                                 <td class="hoja-label">Email:</td>
-                                <td>{{ $orden['cliente_email'] }}</td>
+                                <td>{{ Str::limit(strip_tags($orden['cliente_email'] ?? ''), 150) }}</td>
                             </tr>
                         @endif
                     </table>
@@ -517,25 +518,28 @@
                     <table class="hoja-tabla-datos">
                         <tr>
                             <td class="hoja-label">Vehículo:</td>
-                            <td>{{ $vehiculo['marca'] ?? '' }} {{ $vehiculo['modelo'] ?? '' }}
-                                {{ $vehiculo['anio'] ?? '' }}</td>
+                            <td>
+                                {{ Str::limit(strip_tags($vehiculo['marca'] ?? ''), 60) }}
+                                {{ Str::limit(strip_tags($vehiculo['modelo'] ?? ''), 60) }}
+                                {{ $vehiculo['anio'] ?? '' }}
+                            </td>
                         </tr>
                         @if (!empty($vehiculo['placas']))
                             <tr>
                                 <td class="hoja-label">Placas:</td>
-                                <td>{{ strtoupper($vehiculo['placas']) }}</td>
+                                <td>{{ Str::limit(strtoupper(strip_tags($vehiculo['placas'] ?? '')), 20) }}</td>
                             </tr>
                         @endif
                         @if (!empty($vehiculo['color']))
                             <tr>
                                 <td class="hoja-label">Color:</td>
-                                <td>{{ $vehiculo['color'] }}</td>
+                                <td>{{ Str::limit(strip_tags($vehiculo['color'] ?? ''), 40) }}</td>
                             </tr>
                         @endif
                         @if (!empty($vehiculo['kilometraje']))
                             <tr>
                                 <td class="hoja-label">Kilometraje:</td>
-                                <td>{{ number_format($vehiculo['kilometraje']) }} km</td>
+                                <td>{{ Str::limit(number_format($vehiculo['kilometraje']), 20) }} km</td>
                             </tr>
                         @endif
                     </table>
@@ -559,8 +563,8 @@
                     @forelse ($fallas as $i => $falla)
                         <tr>
                             <td class="center">{{ $i + 1 }}</td>
-                            <td>{{ $falla['categoria'] ?? '-' }}</td>
-                            <td>{{ $falla['descripcion'] ?? '-' }}</td>
+                            <td>{{ Str::limit(strip_tags($falla['categoria'] ?? '-'), 100) }}</td>
+                            <td>{{ Str::limit(strip_tags($falla['descripcion'] ?? '-'), 500) }}</td>
                             <td class="right">${{ number_format($falla['precio'] ?? 0, 2) }}</td>
                         </tr>
                     @empty
@@ -587,7 +591,7 @@
                     @if (!empty($presupuesto['metodo_pago']))
                         <tr>
                             <td class="hoja-label">Método de pago:</td>
-                            <td class="right">{{ $presupuesto['metodo_pago'] }}</td>
+                            <td class="right">{{ Str::limit(strip_tags($presupuesto['metodo_pago'] ?? ''), 50) }}</td>
                         </tr>
                     @endif
                     <tr class="hoja-total-final">
