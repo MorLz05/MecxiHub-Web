@@ -55,14 +55,28 @@
                                 Mis vehículos
                             </a> --}}
                             <a href="{{ route('cuenta.notificaciones.index') }}"
-                                class="flex items-center gap-3 px-4 py-2.5 rounded-xl transition font-medium text-sm
+                                class="relative flex items-center gap-3 px-4 py-2.5 rounded-xl transition font-medium text-sm
     {{ request()->routeIs('cuenta.notificaciones*') ? 'bg-[#0039A6] text-white' : 'text-gray-600 hover:bg-gray-50 hover:text-[#0039A6]' }}">
-                                <i class="fa-solid fa-bell text-base"></i>
+                                <span class="relative">
+                                    <i class="fa-solid fa-bell text-base"></i>
+
+                                    {{-- 🔔 Punto indicador cuando hay no leídas --}}
+                                    @if (($notifNoLeidas ?? 0) > 0)
+                                        <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                                            <span
+                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF6B00] opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF6B00]"></span>
+                                        </span>
+                                    @endif
+                                </span>
+
                                 Notificaciones
+
+                                {{-- Contador numérico a la derecha --}}
                                 @if (($notifNoLeidas ?? 0) > 0)
                                     <span
-                                        class="ml-auto bg-[#FF6B00] text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {{ $notifNoLeidas > 9 ? '9+' : $notifNoLeidas }}
+                                        class="ml-auto bg-[#FF6B00] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-sm">
+                                        {{ $notifNoLeidas > 99 ? '99+' : $notifNoLeidas }}
                                     </span>
                                 @endif
                             </a>
