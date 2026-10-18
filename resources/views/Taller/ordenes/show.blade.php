@@ -1,7 +1,6 @@
 @extends('taller.layouts.app')
 
-@section('title', 'Orden ' . ($orden['folio'] ?? '') . ' - MecxiHub')
-
+@section('title', 'Orden ' . Str::limit(strip_tags($orden['folio'] ?? ''), 40) . ' - MecxiHub')
 @section('content')
 
     @php
@@ -24,8 +23,7 @@
             </a>
             <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 mt-2 flex items-center gap-3 flex-wrap">
                 <span class="font-mono text-lg bg-brand-blue/10 text-brand-blue px-3 py-1.5 rounded-lg">
-                    {{ $orden['folio'] ?? 'S/F' }}
-                </span>
+                    {{ Str::limit(strip_tags($orden['folio'] ?? 'S/F'), 30) }} </span>
                 <span class="px-3 py-1.5 rounded-full text-xs font-bold border {{ $colorBadge }}">
                     {{ $estado }}
                 </span>
@@ -66,15 +64,21 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <p class="text-[11px] text-gray-500 uppercase font-semibold mb-1">Nombre</p>
-                        <p class="font-medium text-gray-900">{{ $orden['cliente_nombre'] ?? '-' }}</p>
+                        <p class="font-medium text-gray-900">
+                            {{ Str::limit(strip_tags($orden['cliente_nombre'] ?? '-'), 100) }}
+                        </p>
                     </div>
                     <div>
                         <p class="text-[11px] text-gray-500 uppercase font-semibold mb-1">Email</p>
-                        <p class="text-gray-700 text-sm">{{ $orden['cliente_email'] ?? '-' }}</p>
+                        <p class="text-gray-700 text-sm">
+                            {{ Str::limit(strip_tags($orden['cliente_email'] ?? '-'), 100) }}
+                        </p>
                     </div>
                     <div>
                         <p class="text-[11px] text-gray-500 uppercase font-semibold mb-1">Teléfono</p>
-                        <p class="text-gray-700 text-sm">{{ $orden['cliente_telefono'] ?? '-' }}</p>
+                        <p class="text-gray-700 text-sm">
+                            {{ Str::limit(strip_tags($orden['cliente_telefono'] ?? '-'), 20) }}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -87,21 +91,24 @@
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
                         <p class="text-[11px] text-gray-500 uppercase font-semibold mb-1">Marca / Modelo</p>
-                        <p class="font-medium text-gray-900">{{ $vehiculo['marca'] ?? '' }}
-                            {{ $vehiculo['modelo'] ?? '' }}</p>
+                        <p class="font-medium text-gray-900">
+                            {{ Str::limit(strip_tags($vehiculo['marca'] ?? ''), 40) }}
+                            {{ Str::limit(strip_tags($vehiculo['modelo'] ?? ''), 40) }}
+                        </p>
                     </div>
                     <div>
                         <p class="text-[11px] text-gray-500 uppercase font-semibold mb-1">Año</p>
-                        <p class="text-gray-700 text-sm">{{ $vehiculo['anio'] ?? '-' }}</p>
+                        <p class="text-gray-700 text-sm">{{ Str::limit(strip_tags($vehiculo['anio'] ?? '-'), 40) }}</p>
                     </div>
                     <div>
                         <p class="text-[11px] text-gray-500 uppercase font-semibold mb-1">Color</p>
-                        <p class="text-gray-700 text-sm">{{ $vehiculo['color'] ?? '-' }}</p>
+                        <p class="text-gray-700 text-sm">{{ Str::limit(strip_tags($vehiculo['color'] ?? '-'), 40) }}</p>
                     </div>
                     <div>
                         <p class="text-[11px] text-gray-500 uppercase font-semibold mb-1">Placas</p>
                         <p class="font-mono text-sm text-gray-900 bg-gray-100 px-2 py-0.5 rounded inline-block">
-                            {{ strtoupper($vehiculo['placas'] ?? '-') }}</p>
+                            {{ Str::limit(strtoupper(strip_tags($vehiculo['placas'] ?? '-')), 20) }}
+                        </p>
                     </div>
                     <div>
                         <p class="text-[11px] text-gray-500 uppercase font-semibold mb-1">Kilometraje</p>
@@ -124,11 +131,23 @@
                     </h3>
                     <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                         @foreach ($evidenciasVehiculo as $ev)
-                            <a href="{{ $ev['url'] }}" target="_blank" rel="noopener"
-                                class="block aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 hover:border-brand-blue hover:shadow-md transition group">
-                                <img src="{{ $ev['url'] }}" alt="Evidencia"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                            </a>
+                            @php
+                                $urlEv = $ev['url'] ?? '';
+                                $urlValida = Str::startsWith($urlEv, ['http://', 'https://']);
+                            @endphp
+                            @if ($urlValida)
+                                <a href="{{ $urlEv }}" target="_blank" rel="noopener"
+                                    class="block aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 hover:border-brand-blue hover:shadow-md transition group">
+                                    <img src="{{ $urlEv }}" alt="Evidencia"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                        loading="lazy" onerror="this.style.display='none'">
+                                </a>
+                            @else
+                                <div
+                                    class="aspect-square rounded-lg border border-red-200 bg-red-50 flex items-center justify-center">
+                                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                                </div>
+                            @endif
                         @endforeach
                     </div>
                 </div>
@@ -156,8 +175,10 @@
                             <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
                                 <div class="flex items-start justify-between gap-3 mb-2">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <span
-                                            class="text-sm font-bold text-gray-800">{{ $falla['categoria'] ?? 'Sin categoría' }}</span>
+                                        <span class="text-sm font-bold text-gray-800">
+                                            {{ Str::limit(strip_tags($falla['categoria'] ?? 'Sin categoría'), 80) }}
+                                        </span>
+
                                         <span
                                             class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $prioColores[$prio] ?? 'bg-gray-100 text-gray-600' }}">
                                             {{ $prio }}
@@ -169,7 +190,9 @@
                                 </div>
 
                                 @if (!empty($falla['descripcion']))
-                                    <p class="text-sm text-gray-600 leading-relaxed">{{ $falla['descripcion'] }}</p>
+                                    <p class="text-sm text-gray-600 leading-relaxed">
+                                        {{ Str::limit(strip_tags($falla['descripcion'] ?? ''), 500) }}
+                                    </p>
                                 @endif
 
                                 @php
@@ -188,11 +211,23 @@
                                         </p>
                                         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                                             @foreach ($evidenciasFalla as $ev)
-                                                <a href="{{ $ev['url'] }}" target="_blank" rel="noopener"
-                                                    class="block aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 hover:border-brand-blue hover:shadow-md transition group">
-                                                    <img src="{{ $ev['url'] }}" alt="Evidencia"
-                                                        class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                                                </a>
+                                                @php
+                                                    $urlEv = $ev['url'] ?? '';
+                                                    $urlValida = Str::startsWith($urlEv, ['http://', 'https://']);
+                                                @endphp
+                                                @if ($urlValida)
+                                                    <a href="{{ $urlEv }}" target="_blank" rel="noopener"
+                                                        class="block aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-100 hover:border-brand-blue hover:shadow-md transition group">
+                                                        <img src="{{ $urlEv }}" alt="Evidencia"
+                                                            class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                                            loading="lazy" onerror="this.style.display='none'">
+                                                    </a>
+                                                @else
+                                                    <div
+                                                        class="aspect-square rounded-lg border border-red-200 bg-red-50 flex items-center justify-center">
+                                                        <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                                                    </div>
+                                                @endif
                                             @endforeach
                                         </div>
                                     </div>
@@ -230,7 +265,9 @@
                             </div>
                             <div>
                                 <p class="text-xs text-purple-600 uppercase font-semibold">Responsable general</p>
-                                <p class="font-bold text-gray-900">{{ $respGeneral['nombre'] }}</p>
+                                <p class="font-bold text-gray-900">
+                                    {{ Str::limit(strip_tags($respGeneral['nombre'] ?? ''), 100) }}
+                                </p>
                             </div>
                         </div>
                     @elseif ($modoAsignacion === 'por_falla')
@@ -246,7 +283,7 @@
                                     <span class="text-sm font-semibold text-purple-700 whitespace-nowrap">
                                         @if ($respFalla)
                                             <i class="fa-solid fa-user text-[10px]"></i>
-                                            {{ $respFalla['nombre'] }}
+                                            {{ Str::limit(strip_tags($respFalla['nombre'] ?? ''), 100) }}
                                         @else
                                             <span class="text-gray-400 italic text-xs">Sin asignar</span>
                                         @endif
@@ -282,7 +319,9 @@
                     @if (!empty($presupuesto['metodo_pago']))
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600">Método de pago</span>
-                            <span class="text-sm text-gray-800">{{ $presupuesto['metodo_pago'] }}</span>
+                            <span class="text-sm text-gray-800">
+                                {{ Str::limit(strip_tags($presupuesto['metodo_pago'] ?? ''), 50) }}
+                            </span>
                         </div>
                     @endif
                     <div class="pt-3 border-t border-gray-100 flex items-center justify-between">
@@ -352,77 +391,77 @@
                     </div>
                 </div>
             @endif
-    </div>
+        </div>
 
-    @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const csrf = '{{ csrf_token() }}';
+        @push('scripts')
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const csrf = '{{ csrf_token() }}';
 
-                document.querySelectorAll('.btn-cambiar-estado').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const nuevoEstado = this.dataset.estado;
-                        const esCancelar = nuevoEstado === 'Cancelado';
+                    document.querySelectorAll('.btn-cambiar-estado').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const nuevoEstado = this.dataset.estado;
+                            const esCancelar = nuevoEstado === 'Cancelado';
 
-                        if (esCancelar && !confirm(
-                                '¿Cancelar esta orden? Esta acción no se puede deshacer.')) return;
-                        if (!esCancelar && !confirm('¿Cambiar el estado a "' + nuevoEstado + '"?'))
-                            return;
+                            if (esCancelar && !confirm(
+                                    '¿Cancelar esta orden? Esta acción no se puede deshacer.')) return;
+                            if (!esCancelar && !confirm('¿Cambiar el estado a "' + nuevoEstado + '"?'))
+                                return;
 
-                        this.disabled = true;
+                            this.disabled = true;
 
-                        fetch('{{ route('taller.ordenes.cambiar-estado', $orden['id']) }}', {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': csrf,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    estado: nuevoEstado
+                            fetch('{{ route('taller.ordenes.cambiar-estado', $orden['id']) }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': csrf,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        estado: nuevoEstado
+                                    })
                                 })
-                            })
-                            .then(r => r.json())
-                            .then(data => {
-                                if (data.success) {
-                                    showToast(data.message, 'success');
-                                    setTimeout(() => location.reload(), 700);
-                                } else {
-                                    showToast(data.error || 'Error', 'error');
+                                .then(r => r.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        showToast(data.message, 'success');
+                                        setTimeout(() => location.reload(), 700);
+                                    } else {
+                                        showToast(data.error || 'Error', 'error');
+                                        this.disabled = false;
+                                    }
+                                })
+                                .catch(() => {
+                                    showToast('Error de conexión', 'error');
                                     this.disabled = false;
-                                }
-                            })
-                            .catch(() => {
-                                showToast('Error de conexión', 'error');
-                                this.disabled = false;
-                            });
+                                });
+                        });
                     });
+
+                    function showToast(message, type = 'info') {
+                        const colors = {
+                            success: 'bg-green-50 border-green-200 text-green-700',
+                            error: 'bg-red-50 border-red-200 text-red-700',
+                            info: 'bg-blue-50 border-blue-200 text-brand-blue',
+                        };
+                        const icons = {
+                            success: 'fa-circle-check text-green-500',
+                            error: 'fa-circle-exclamation text-red-500',
+                            info: 'fa-circle-info text-brand-blue',
+                        };
+
+                        const toast = document.createElement('div');
+                        toast.className =
+                            `fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 border ${colors[type]}`;
+                        toast.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span class="text-sm">${message}</span>`;
+                        document.body.appendChild(toast);
+
+                        setTimeout(() => {
+                            toast.style.opacity = '0';
+                            toast.style.transition = 'opacity 0.5s';
+                            setTimeout(() => toast.remove(), 500);
+                        }, 3000);
+                    }
                 });
-
-                function showToast(message, type = 'info') {
-                    const colors = {
-                        success: 'bg-green-50 border-green-200 text-green-700',
-                        error: 'bg-red-50 border-red-200 text-red-700',
-                        info: 'bg-blue-50 border-blue-200 text-brand-blue',
-                    };
-                    const icons = {
-                        success: 'fa-circle-check text-green-500',
-                        error: 'fa-circle-exclamation text-red-500',
-                        info: 'fa-circle-info text-brand-blue',
-                    };
-
-                    const toast = document.createElement('div');
-                    toast.className =
-                        `fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 border ${colors[type]}`;
-                    toast.innerHTML = `<i class="fa-solid ${icons[type]}"></i><span class="text-sm">${message}</span>`;
-                    document.body.appendChild(toast);
-
-                    setTimeout(() => {
-                        toast.style.opacity = '0';
-                        toast.style.transition = 'opacity 0.5s';
-                        setTimeout(() => toast.remove(), 500);
-                    }, 3000);
-                }
-            });
-        </script>
-    @endpush
-@endsection
+            </script>
+        @endpush
+    @endsection

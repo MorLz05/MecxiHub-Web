@@ -75,7 +75,8 @@
                             <label
                                 class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Teléfono</label>
                             <input type="text" name="cliente_telefono"
-                                value="{{ old('cliente_telefono', $orden['cliente_telefono'] ?? '') }}"
+                                value="{{ old('cliente_telefono', $orden['cliente_telefono'] ?? '') }}" maxlength="20"
+                                pattern="[\d\s\+\-\(\)]{7,20}" title="Solo números y caracteres + - ( )"
                                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-blue text-sm">
                         </div>
                     </div>
@@ -525,21 +526,21 @@
                                 class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-brand-blue text-sm bg-white">${data.descripcion || ''}</textarea>
                         </div>
                         ${mostrarResponsable ? `
-                                                                                    <div class="md:col-span-3 pt-3 border-t border-purple-100">
-                                                                                        <label class="block text-[10px] font-semibold text-purple-700 uppercase tracking-wider mb-1">
-                                                                                            <i class="fa-solid fa-user-gear mr-1"></i> Responsable de esta falla
-                                                                                        </label>
-                                                                                        <select name="fallas[${idx}][responsable_id]" class="select-responsable-falla w-full px-3 py-2 rounded-lg border border-purple-200 focus:outline-none focus:border-purple-500 text-sm bg-white">
-                                                                                            <option value="">— Seleccionar responsable —</option>
-                                                                                            ${personalTaller.map(p => `
+                                                                                                    <div class="md:col-span-3 pt-3 border-t border-purple-100">
+                                                                                                        <label class="block text-[10px] font-semibold text-purple-700 uppercase tracking-wider mb-1">
+                                                                                                            <i class="fa-solid fa-user-gear mr-1"></i> Responsable de esta falla
+                                                                                                        </label>
+                                                                                                        <select name="fallas[${idx}][responsable_id]" class="select-responsable-falla w-full px-3 py-2 rounded-lg border border-purple-200 focus:outline-none focus:border-purple-500 text-sm bg-white">
+                                                                                                            <option value="">— Seleccionar responsable —</option>
+                                                                                                            ${personalTaller.map(p => `
                                         <option value="${p.id}" data-nombre="${p.nombre}" ${data.responsable_id === p.id ? 'selected' : ''}>
                                             ${p.nombre}${p.puesto ? ' · ' + p.puesto : ''}
                                         </option>
                                     `).join('')}
-                                                                                        </select>
-                                                                                        <input type="hidden" name="fallas[${idx}][responsable_nombre]" value="${data.responsable_nombre || ''}" class="input-responsable-nombre">
-                                                                                    </div>
-                                                                                ` : ''}
+                                                                                                        </select>
+                                                                                                        <input type="hidden" name="fallas[${idx}][responsable_nombre]" value="${data.responsable_nombre || ''}" class="input-responsable-nombre">
+                                                                                                    </div>
+                                                                                                ` : ''}
 
                         ${/* Evidencias por falla */ ''}
                         <div class="md:col-span-3 pt-3 border-t border-gray-100">
@@ -796,6 +797,78 @@
                 });
 
                 // ============================================================
+                // SANITIZACIÓN ANTI-XSS (mismo patrón)
+                // ============================================================
+                function sanitizeTextInput(value) {
+                    if (typeof value !== 'string') return '';
+                    return value
+                        .replace(/<[^>]*>/g, '')
+                        .replace(/[<>{}]/g, '')
+                        .replace(/javascript:/gi, '')
+                        .replace(/on\w+\s*=/gi, '')
+                        .replace(/[\u0000-\u001F\u007F]/g, '')
+                        .trim();
+                }
+
+                document.querySelectorAll(
+                    '#orden-form input[type="text"], #orden-form textarea'
+                ).forEach(el => {
+                    if (el.type === 'email' || el.type === 'hidden' || el.type === 'number') return;
+
+                    el.addEventListener('paste', function(e) {
+                        const texto = (e.clipboardData || window.clipboardData).getData('text');
+                        if (/[<>{}]|javascript:|on\w+\s*=/i.test(texto)) {
+                            e.preventDefault();
+                            document.execCommand('insertText', false, sanitizeTextInput(texto));
+                        }
+                    });
+
+                    el.addEventListener('input', function() {
+                        if (this.dataset.sanitizing === '1') return;
+                        const original = this.value;
+                        const limpio = sanitizeTextInput(original);
+                        if (limpio !== original) {
+                            this.dataset.sanitizing = '1';
+                            const pos = this.selectionStart - (original.length - limpio.length);
+                            this.value = limpio;
+                            this.setSelectionRange(Math.max(0, pos), Math.max(0, pos));
+                            this.dataset.sanitizing = '0';
+                        }
+                    });
+
+                    el.addEventListener('blur', function() {
+                        if (/[<>{}]/.test(this.value)) {
+                            this.value = sanitizeTextInput(this.value);
+                        }
+                    });
+                });
+
+                document.getElementById('orden-form')?.addEventListener('submit', function(e) {
+                    const errores = [];
+                    const nombre = this.querySelector('[name="cliente_nombre"]');
+                    const telefono = this.querySelector('[name="cliente_telefono"]');
+
+                    if (nombre && /[<>{}]/.test(nombre.value)) {
+                        errores.push('El nombre del cliente contiene caracteres no permitidos (< > { }).');
+                    }
+                    if (telefono && telefono.value && !/[\d\s\+\-\(\)]{7,20}/.test(telefono.value)) {
+                        errores.push('El teléfono solo puede contener números, +, -, ( ) y espacios.');
+                    }
+
+                    this.querySelectorAll('[name*="[categoria]"], [name*="[descripcion]"]').forEach(inp => {
+                        if (inp.value && /[<>{}]/.test(inp.value)) {
+                            errores.push('Las fallas contienen caracteres no permitidos (< > { }).');
+                        }
+                    });
+
+                    if (errores.length > 0) {
+                        e.preventDefault();
+                        alert(errores.join('\n'));
+                        return false;
+                    }
+                });
+
+                // ============================================================
                 // SUBIR EVIDENCIAS PENDIENTES (vienen de create)
                 // ============================================================
                 @if (session('subir_evidencias_pendientes'))
@@ -885,6 +958,8 @@
                         }, 3500);
                     })();
                 @endif
+
+
             });
         </script>
     @endpush

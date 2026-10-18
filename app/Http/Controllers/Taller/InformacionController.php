@@ -82,7 +82,7 @@ class InformacionController extends Controller
                             $tallerData['id'] = $tallerId;
 
                             // Asegurar que todos los campos existan
-                            $tallerData['descripcion'] = $tallerData['descripcion'] ?? '';
+                            $tallerData['descripcion'] = ($tallerData['descripcion'] ?? '');
                             $tallerData['servicios_count'] = $tallerData['servicios_count'] ?? [];
                             $tallerData['horario'] = $tallerData['horario'] ?? [];
                             $tallerData['verificado'] = $tallerData['verificado'] ?? false;
@@ -212,12 +212,38 @@ class InformacionController extends Controller
     public function updateInfo(Request $request, $tallerId)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'direccion' => 'required|string|max:500',
-            'telefono' => 'required|string|max:20',
+            'nombre' => [
+                'required',
+                'string',
+                'min:2',
+                'max:120',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'descripcion' => [
+                'nullable',
+                'string',
+                'max:2000',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'direccion' => [
+                'required',
+                'string',
+                'max:300',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'telefono' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^[\d\s\+\-\(\)]{7,20}$/',
+            ],
             'latitud' => 'nullable|numeric|between:-90,90',
             'longitud' => 'nullable|numeric|between:-180,180',
+        ], [
+            'nombre.regex' => 'El nombre contiene caracteres no permitidos (<, >, {, }).',
+            'descripcion.regex' => 'La descripción contiene caracteres no permitidos.',
+            'direccion.regex' => 'La dirección contiene caracteres no permitidos.',
+            'telefono.regex' => 'El teléfono solo puede contener números, +, -, ( ) y espacios.',
         ]);
 
         if (!$this->firestoreDb) {
@@ -232,14 +258,19 @@ class InformacionController extends Controller
                 return back()->withErrors(['error' => 'Taller no encontrado.']);
             }
 
+            // 🔒 Sanitizar (defensa en profundidad)
+            $nombre      = $this->sanitize($validated['nombre'], 120);
+            $descripcion = $this->sanitize($validated['descripcion'] ?? '', 2000);
+            $direccion   = $this->sanitize($validated['direccion'], 300);
+            $telefono    = preg_replace('/[^\d\s\+\-\(\)]/', '', $validated['telefono']);
+
             $updates = [
-                ['path' => 'nombre', 'value' => $validated['nombre']],
-                ['path' => 'descripcion', 'value' => $validated['descripcion'] ?? ''],
-                ['path' => 'direccion', 'value' => $validated['direccion']],
-                ['path' => 'telefono', 'value' => $validated['telefono']],
+                ['path' => 'nombre', 'value' => $nombre],
+                ['path' => 'descripcion', 'value' => $descripcion],
+                ['path' => 'direccion', 'value' => $direccion],
+                ['path' => 'telefono', 'value' => $telefono],
             ];
 
-            // Guardar coordenadas si vinieron
             if (!empty($validated['latitud']) && !empty($validated['longitud'])) {
                 $updates[] = ['path' => 'latitud', 'value' => (float) $validated['latitud']];
                 $updates[] = ['path' => 'longitud', 'value' => (float) $validated['longitud']];
@@ -250,10 +281,10 @@ class InformacionController extends Controller
             Log::info('Información básica del taller actualizada: ' . $tallerId);
 
             $tallerData = session('taller_data', []);
-            $tallerData['nombre'] = $validated['nombre'];
-            $tallerData['descripcion'] = $validated['descripcion'] ?? '';
-            $tallerData['direccion'] = $validated['direccion'];
-            $tallerData['telefono'] = $validated['telefono'];
+            $tallerData['nombre'] = $nombre;
+            $tallerData['descripcion'] = $descripcion;
+            $tallerData['direccion'] = $direccion;
+            $tallerData['telefono'] = $telefono;
             if (!empty($validated['latitud']) && !empty($validated['longitud'])) {
                 $tallerData['latitud'] = (float) $validated['latitud'];
                 $tallerData['longitud'] = (float) $validated['longitud'];
@@ -380,14 +411,34 @@ class InformacionController extends Controller
         return $horarioProcesado;
     }
 
-    // Métodos de servicios (se mantienen igual)
+    // Métodos de servicios
     public function agregarServicio(Request $request, $tallerId)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:100',
-            'descripcion' => 'nullable|string',
-            'precio' => 'nullable|string|min:1|max:20',
+            'nombre' => [
+                'required',
+                'string',
+                'min:2',
+                'max:100',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'descripcion' => [
+                'nullable',
+                'string',
+                'max:500',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'precio' => [
+                'nullable',
+                'string',
+                'max:20',
+                'regex:/^[\d\.,\s\$]*$/',
+            ],
             'activo' => 'boolean',
+        ], [
+            'nombre.regex' => 'El nombre del servicio contiene caracteres no permitidos.',
+            'descripcion.regex' => 'La descripción del servicio contiene caracteres no permitidos.',
+            'precio.regex' => 'El precio solo puede contener números, puntos, comas y $.',
         ]);
 
         if (!$this->firestoreDb) {
@@ -405,12 +456,13 @@ class InformacionController extends Controller
             $tallerData = $tallerSnapshot->data();
             $servicios = $tallerData['servicios_count'] ?? [];
 
+            // 🔒 Sanitizar
             $nuevoServicio = [
-                'id' => 'servicio_' . uniqid(),
-                'nombre' => $validated['nombre'],
-                'descripcion' => $validated['descripcion'] ?? '',
-                'precio' => $validated['precio'] ?? 0,
-                'activo' => $validated['activo'] ?? true,
+                'id'          => 'servicio_' . uniqid(),
+                'nombre'      => $this->sanitize($validated['nombre'], 100),
+                'descripcion' => $this->sanitize($validated['descripcion'] ?? '', 500),
+                'precio'      => preg_replace('/[^\d\.,\$]/', '', $validated['precio'] ?? ''),
+                'activo'      => (bool) ($validated['activo'] ?? true),
             ];
 
             $servicios[] = $nuevoServicio;
@@ -508,5 +560,25 @@ class InformacionController extends Controller
             Log::error('Error actualizando estado del servicio: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Error al actualizar el estado del servicio.']);
         }
+    }
+
+    private function sanitize(string $value, int $max = 2000): string
+    {
+        // 1) Quitar etiquetas HTML/PHP
+        $value = strip_tags($value);
+
+        // 2) Quitar null bytes y caracteres de control
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
+
+        // 3) Decodificar entidades para no guardar &lt; como texto literal
+        $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // 4) Neutralizar < > { }
+        $value = str_replace(['<', '>', '{', '}'], '', $value);
+
+        // 5) Normalizar espacios
+        $value = preg_replace('/\s+/u', ' ', trim($value));
+
+        return mb_substr($value, 0, $max);
     }
 }

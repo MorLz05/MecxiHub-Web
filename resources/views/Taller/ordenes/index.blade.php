@@ -154,28 +154,30 @@
                             <td class="px-6 py-4">
                                 <span
                                     class="font-mono text-xs font-bold text-brand-blue bg-brand-blue/10 px-2.5 py-1 rounded-md">
-                                    {{ $orden['folio'] ?? 'S/F' }}
-                                </span>
+                                    {{ Str::limit(strip_tags($orden['folio'] ?? 'S/F'), 30) }} </span>
                                 <p class="text-[11px] text-gray-400 mt-1">
                                     {{ isset($orden['fecha_orden']) ? \Carbon\Carbon::parse($orden['fecha_orden'])->format('d/m/Y H:i') : '' }}
                                 </p>
                             </td>
                             <td class="px-6 py-4">
-                                <p class="font-semibold text-gray-900">{{ $orden['cliente_nombre'] ?? 'Sin nombre' }}</p>
+                                <p class="font-semibold text-gray-900">
+                                    {{ Str::limit(strip_tags($orden['cliente_nombre'] ?? 'Sin nombre'), 100) }}
+                                </p>
                                 @if (!empty($orden['cliente_telefono']))
                                     <p class="text-xs text-gray-500"><i
-                                            class="fa-solid fa-phone text-[10px] mr-1"></i>{{ $orden['cliente_telefono'] }}
+                                            class="fa-solid fa-phone text-[10px] mr-1"></i>{{ Str::limit(strip_tags($orden['cliente_telefono'] ?? ''), 20) }}
                                     </p>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
                                 <p class="font-medium text-gray-800">
-                                    {{ $vehiculo['marca'] ?? '' }} {{ $vehiculo['modelo'] ?? '' }}
+                                    {{ Str::limit(strip_tags($vehiculo['marca'] ?? ''), 40) }}
+                                    {{ Str::limit(strip_tags($vehiculo['modelo'] ?? ''), 40) }}
                                 </p>
                                 <p class="text-xs text-gray-500">
                                     {{ $vehiculo['anio'] ?? '' }}
                                     @if (!empty($vehiculo['placas']))
-                                        · {{ strtoupper($vehiculo['placas']) }}
+                                        · {{ Str::limit(strtoupper(strip_tags($vehiculo['placas'] ?? '')), 20) }}
                                     @endif
                                 </p>
                             </td>

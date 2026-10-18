@@ -1,7 +1,6 @@
 @extends('taller.layouts.app')
 
-@section('title', 'Comentarios - ' . ($taller['nombre'] ?? 'Panel Taller'))
-
+@section('title', 'Comentarios - ' . Str::limit(strip_tags($taller['nombre'] ?? 'Panel Taller'), 60))
 @section('content')
     {{-- HEADER --}}
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -12,7 +11,7 @@
             </p>
         </div>
         <a href="{{ route('taller.dashboard') }}"
-           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition">
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition">
             <i class="fa-solid fa-arrow-left"></i>
             Volver al resumen
         </a>
@@ -36,7 +35,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
         {{-- Card: Calificación promedio --}}
-        <div class="bg-gradient-to-br from-brand-darkblue to-[#001c59] rounded-3xl shadow-xl p-6 text-white relative overflow-hidden">
+        <div
+            class="bg-gradient-to-br from-brand-darkblue to-[#001c59] rounded-3xl shadow-xl p-6 text-white relative overflow-hidden">
             <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full"></div>
             <div class="absolute -bottom-12 -left-12 w-48 h-48 bg-brand-orange/10 rounded-full"></div>
 
@@ -80,7 +80,7 @@
             @if ($totalResenas > 0)
                 <div class="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div class="h-full bg-green-500 rounded-full transition-all"
-                         style="width: {{ $totalResenas > 0 ? round(($respondidas / $totalResenas) * 100) : 0 }}%"></div>
+                        style="width: {{ $totalResenas > 0 ? round(($respondidas / $totalResenas) * 100) : 0 }}%"></div>
                 </div>
                 <p class="text-xs text-gray-400 mt-1.5">
                     {{ $totalResenas > 0 ? round(($respondidas / $totalResenas) * 100) : 0 }}% del total
@@ -107,7 +107,7 @@
 
             @if ($sinResponder > 0)
                 <a href="{{ route('taller.comentarios', ['estado' => 'pendientes']) }}"
-                   class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-orange hover:underline">
+                    class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-orange hover:underline">
                     Responder ahora
                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                 </a>
@@ -135,7 +135,7 @@
                         </div>
                         <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-2">
                             <div class="h-full bg-brand-orange rounded-full transition-all"
-                                 style="width: {{ $porcentajes[$est] ?? 0 }}%"></div>
+                                style="width: {{ $porcentajes[$est] ?? 0 }}%"></div>
                         </div>
                         <p class="text-xs text-gray-500">
                             <strong class="text-gray-700">{{ $distribucion[$est] ?? 0 }}</strong>
@@ -152,19 +152,21 @@
         <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Filtrar:</span>
 
         <a href="{{ route('taller.comentarios') }}"
-           class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition
+            class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition
                   {{ !$filtroEstado && !$filtroRating ? 'bg-brand-darkblue text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
             Todas
         </a>
 
         <a href="{{ route('taller.comentarios', ['estado' => 'pendientes']) }}"
-           class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition
+            class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition
                   {{ $filtroEstado === 'pendientes' ? 'bg-brand-orange text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-            Sin responder @if($sinResponder > 0) <span class="ml-1 bg-white/30 px-1.5 rounded-full">{{ $sinResponder }}</span> @endif
+            Sin responder @if ($sinResponder > 0)
+                <span class="ml-1 bg-white/30 px-1.5 rounded-full">{{ $sinResponder }}</span>
+            @endif
         </a>
 
         <a href="{{ route('taller.comentarios', ['estado' => 'respondidas']) }}"
-           class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition
+            class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition
                   {{ $filtroEstado === 'respondidas' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
             Respondidas
         </a>
@@ -173,15 +175,15 @@
 
         @foreach ([5, 4, 3, 2, 1] as $est)
             <a href="{{ route('taller.comentarios', ['rating' => $est]) }}"
-               class="px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1
-                      {{ (int)$filtroRating === $est ? 'bg-brand-darkblue text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                class="px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1
+                      {{ (int) $filtroRating === $est ? 'bg-brand-darkblue text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                 {{ $est }} <i class="fa-solid fa-star text-[9px] text-brand-orange"></i>
             </a>
         @endforeach
 
         @if ($filtroEstado || $filtroRating)
             <a href="{{ route('taller.comentarios') }}"
-               class="ml-auto inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 font-semibold">
+                class="ml-auto inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 font-semibold">
                 <i class="fa-solid fa-xmark"></i> Limpiar filtros
             </a>
         @endif
@@ -206,8 +208,10 @@
         <div class="space-y-4">
             @foreach ($resenas as $resena)
                 @php
-                    $nombre = $resena['usuario_nombre'] ?? 'Cliente';
-                    $iniciales = $resena['usuario_inicial'] ?? strtoupper(mb_substr($nombre, 0, 1));
+                    $nombreLimpio = strip_tags($resena['usuario_nombre'] ?? 'Cliente');
+                    $nombre = Str::limit($nombreLimpio, 80);
+                    $iniciales = $resena['usuario_inicial'] ?? strtoupper(mb_substr($nombreLimpio, 0, 1));
+                    $iniciales = Str::limit(strip_tags($iniciales), 3);
                     $rating = (int) ($resena['rating'] ?? 0);
                     $fecha = !empty($resena['fecha'])
                         ? \Carbon\Carbon::parse($resena['fecha'])->diffForHumans()
@@ -219,25 +223,28 @@
                 @endphp
 
                 <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition"
-                     x-data="{ responder: false, editando: false }">
+                    x-data="{ responder: false, editando: false }">
 
                     {{-- Cabecera: usuario + estrellas --}}
                     <div class="flex items-start gap-4">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-brand-blue to-brand-darkblue flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <div
+                            class="w-12 h-12 rounded-full bg-gradient-to-br from-brand-blue to-brand-darkblue flex items-center justify-center flex-shrink-0 shadow-sm">
                             <span class="text-white font-bold text-sm">{{ $iniciales }}</span>
                         </div>
 
                         <div class="flex-1 min-w-0">
                             <div class="flex items-start justify-between gap-3 flex-wrap">
                                 <div>
-                                    <p class="font-bold text-gray-900 text-sm">{{ $nombre }}</p>
+                                    <p class="font-bold text-gray-900 text-sm">{{ Str::limit(strip_tags($nombre), 80) }}
+                                    </p>
                                     <p class="text-xs text-gray-400 mt-0.5">{{ $fecha }}</p>
                                 </div>
 
                                 <div class="flex items-center gap-2">
                                     <div class="flex items-center gap-0.5">
                                         @for ($i = 1; $i <= 5; $i++)
-                                            <i class="fa-solid fa-star text-sm {{ $i <= $rating ? 'text-brand-orange' : 'text-gray-200' }}"></i>
+                                            <i
+                                                class="fa-solid fa-star text-sm {{ $i <= $rating ? 'text-brand-orange' : 'text-gray-200' }}"></i>
                                         @endfor
                                     </div>
                                     <span class="text-xs font-bold text-gray-700 ml-1">{{ $rating }}.0</span>
@@ -247,7 +254,7 @@
                             {{-- Comentario --}}
                             @if (!empty($resena['comentario']))
                                 <p class="text-gray-700 text-sm mt-3 leading-relaxed">
-                                    {{ $resena['comentario'] }}
+                                    {{ Str::limit(strip_tags($resena['comentario'] ?? ''), 2000) }}
                                 </p>
                             @endif
                         </div>
@@ -256,7 +263,7 @@
                     {{-- Respuesta existente --}}
                     @if ($tieneRespuesta)
                         <div class="mt-4 ml-16 pl-4 border-l-3 border-brand-blue bg-blue-50/40 rounded-r-xl p-4"
-                             style="border-left-width: 3px;">
+                            style="border-left-width: 3px;">
                             <div class="flex items-center gap-2 mb-2">
                                 <div class="w-6 h-6 rounded-full bg-brand-darkblue flex items-center justify-center">
                                     <i class="fa-solid fa-store text-white text-[10px]"></i>
@@ -266,23 +273,25 @@
                                     <span class="text-xs text-gray-400">• {{ $respuestaFecha }}</span>
                                 @endif
                             </div>
-                            <p class="text-gray-700 text-sm leading-relaxed">{{ $resena['respuesta_taller'] }}</p>
+                            <p class="text-gray-700 text-sm leading-relaxed">
+                                {{ Str::limit(strip_tags($resena['respuesta_taller'] ?? ''), 1000) }}
+                            </p>
 
                             <div class="flex items-center gap-3 mt-3">
                                 <button @click="editando = !editando"
-                                        class="text-xs text-brand-blue hover:underline font-semibold flex items-center gap-1">
+                                    class="text-xs text-brand-blue hover:underline font-semibold flex items-center gap-1">
                                     <i class="fa-solid fa-pen"></i>
                                     <span x-text="editando ? 'Cancelar' : 'Editar respuesta'"></span>
                                 </button>
 
-                                <form action="{{ route('taller.comentarios.respuesta.eliminar', ['resenaId' => $resena['id']]) }}"
-                                      method="POST"
-                                      onsubmit="return confirm('¿Eliminar esta respuesta?');"
-                                      class="inline">
+                                <form
+                                    action="{{ route('taller.comentarios.respuesta.eliminar', ['resenaId' => $resena['id']]) }}"
+                                    method="POST" onsubmit="return confirm('¿Eliminar esta respuesta?');"
+                                    class="inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"
-                                            class="text-xs text-red-500 hover:underline font-semibold flex items-center gap-1">
+                                        class="text-xs text-red-500 hover:underline font-semibold flex items-center gap-1">
                                         <i class="fa-solid fa-trash text-[10px]"></i>
                                         Eliminar
                                     </button>
@@ -292,17 +301,17 @@
                             {{-- Form editar (oculto por defecto) --}}
                             <div x-show="editando" x-transition class="mt-3">
                                 <form action="{{ route('taller.comentarios.responder', ['resenaId' => $resena['id']]) }}"
-                                      method="POST">
+                                    method="POST">
                                     @csrf
                                     <textarea name="respuesta" rows="3" maxlength="1000"
-                                              class="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-brand-blue focus:ring-2 focus:ring-blue-100 resize-none">{{ $resena['respuesta_taller'] }}</textarea>
+                                        class="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-brand-blue focus:ring-2 focus:ring-blue-100 resize-none">{{ Str::limit(strip_tags($resena['respuesta_taller'] ?? ''), 1000) }}</textarea>
                                     <div class="flex justify-end gap-2 mt-2">
                                         <button type="button" @click="editando = false"
-                                                class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition">
+                                            class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition">
                                             Cancelar
                                         </button>
                                         <button type="submit"
-                                                class="px-4 py-2 rounded-xl bg-brand-blue text-white text-xs font-semibold hover:bg-blue-700 transition flex items-center gap-1.5">
+                                            class="px-4 py-2 rounded-xl bg-brand-blue text-white text-xs font-semibold hover:bg-blue-700 transition flex items-center gap-1.5">
                                             <i class="fa-solid fa-check"></i>
                                             Guardar cambios
                                         </button>
@@ -314,25 +323,25 @@
                         {{-- Sin respuesta: botón + form --}}
                         <div class="mt-4 ml-16">
                             <button @click="responder = !responder"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-orange text-white text-xs font-semibold hover:bg-orange-600 transition shadow-sm">
+                                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-orange text-white text-xs font-semibold hover:bg-orange-600 transition shadow-sm">
                                 <i class="fa-solid fa-reply"></i>
                                 <span x-text="responder ? 'Cancelar' : 'Responder'"></span>
                             </button>
 
                             <div x-show="responder" x-transition class="mt-3">
                                 <form action="{{ route('taller.comentarios.responder', ['resenaId' => $resena['id']]) }}"
-                                      method="POST">
+                                    method="POST">
                                     @csrf
-                                    <textarea name="respuesta" rows="3" maxlength="1000" required
-                                              placeholder="Gracias por tu comentario..."
-                                              class="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-brand-blue focus:ring-2 focus:ring-blue-100 resize-none"></textarea>
+                                    <textarea name="respuesta" rows="3" minlength="3" maxlength="1000" required
+                                        placeholder="Gracias por tu comentario..."
+                                        class="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-brand-blue focus:ring-2 focus:ring-blue-100 resize-none"></textarea>
                                     <div class="flex justify-end gap-2 mt-2">
                                         <button type="button" @click="responder = false"
-                                                class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition">
+                                            class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition">
                                             Cancelar
                                         </button>
                                         <button type="submit"
-                                                class="px-4 py-2 rounded-xl bg-brand-blue text-white text-xs font-semibold hover:bg-blue-700 transition flex items-center gap-1.5">
+                                            class="px-4 py-2 rounded-xl bg-brand-blue text-white text-xs font-semibold hover:bg-blue-700 transition flex items-center gap-1.5">
                                             <i class="fa-solid fa-paper-plane"></i>
                                             Publicar respuesta
                                         </button>
@@ -355,15 +364,91 @@
         <div>
             <p class="text-xs font-bold text-brand-darkblue">Consejo</p>
             <p class="text-xs text-gray-600 mt-0.5">
-                Responder a las reseñas (especialmente las negativas) mejora tu reputación y ayuda a futuros clientes a confiar en tu taller.
+                Responder a las reseñas (especialmente las negativas) mejora tu reputación y ayuda a futuros clientes a
+                confiar en tu taller.
             </p>
         </div>
     </div>
 @endsection
 
 @push('scripts')
-<script>
-    // Confirmación opcional: ya está con onsubmit
-    // Aquí puedes agregar lógica extra si lo necesitas
-</script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ============================================================
+            // SANITIZACIÓN ANTI-XSS (mismo patrón que el resto del panel)
+            // ============================================================
+            function sanitizeTextInput(value) {
+                if (typeof value !== 'string') return '';
+                return value
+                    .replace(/<[^>]*>/g, '') // eliminar etiquetas HTML
+                    .replace(/[<>{}]/g, '') // eliminar < > { }
+                    .replace(/javascript:/gi, '') // eliminar pseudo-protocolo
+                    .replace(/on\w+\s*=/gi, '') // eliminar onerror=, onload=, etc.
+                    .replace(/[\u0000-\u001F\u007F]/g, '') // caracteres de control
+                    .trim();
+            }
+
+            // Aplicar a TODOS los textarea de respuesta
+            document.querySelectorAll('textarea[name="respuesta"]').forEach(el => {
+                // Bloquear pegado de HTML/scripts
+                el.addEventListener('paste', function(e) {
+                    const texto = (e.clipboardData || window.clipboardData).getData('text');
+                    if (/[<>{}]|javascript:|on\w+\s*=/i.test(texto)) {
+                        e.preventDefault();
+                        document.execCommand('insertText', false, sanitizeTextInput(texto));
+                    }
+                });
+
+                // Limpiar mientras escribe
+                el.addEventListener('input', function() {
+                    if (this.dataset.sanitizing === '1') return;
+                    const original = this.value;
+                    const limpio = sanitizeTextInput(original);
+                    if (limpio !== original) {
+                        this.dataset.sanitizing = '1';
+                        const pos = this.selectionStart - (original.length - limpio.length);
+                        this.value = limpio;
+                        this.setSelectionRange(Math.max(0, pos), Math.max(0, pos));
+                        this.dataset.sanitizing = '0';
+                    }
+                });
+
+                // Limpieza al salir del campo
+                el.addEventListener('blur', function() {
+                    if (/[<>{}]/.test(this.value)) {
+                        this.value = sanitizeTextInput(this.value);
+                    }
+                });
+            });
+
+            // Validación final al submit de cualquier form con "respuesta"
+            document.querySelectorAll('form').forEach(form => {
+                const txt = form.querySelector('textarea[name="respuesta"]');
+                if (!txt) return;
+
+                form.addEventListener('submit', function(e) {
+                    const valor = (txt.value || '').trim();
+
+                    if (/[<>{}]/.test(valor)) {
+                        e.preventDefault();
+                        alert('La respuesta contiene caracteres no permitidos (< > { }).');
+                        txt.focus();
+                        return false;
+                    }
+                    if (valor.length < 3) {
+                        e.preventDefault();
+                        alert('La respuesta debe tener al menos 3 caracteres.');
+                        txt.focus();
+                        return false;
+                    }
+                    if (valor.length > 1000) {
+                        e.preventDefault();
+                        alert('La respuesta no puede superar los 1000 caracteres.');
+                        txt.focus();
+                        return false;
+                    }
+                });
+            });
+        });
+    </script>
 @endpush

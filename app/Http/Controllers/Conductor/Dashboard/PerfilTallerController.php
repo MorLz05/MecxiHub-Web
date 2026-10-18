@@ -55,6 +55,19 @@ class PerfilTallerController extends Controller
         }
     } */
 
+    // ============================================================
+    // HELPER DE SANITIZACIÓN (anti XSS / script injection)
+    // ============================================================
+    private function sanitize(string $value, int $max = 2000): string
+    {
+        $value = strip_tags($value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value);
+        $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $value = str_replace(['<', '>', '{', '}'], '', $value);
+        $value = preg_replace('/\s+/u', ' ', trim($value));
+        return mb_substr($value, 0, $max);
+    }
+
     /**
      * Mostrar el perfil público de un taller
      */
@@ -73,17 +86,17 @@ class PerfilTallerController extends Controller
 
         $taller = $tallerDoc->data();
         $taller['id'] = $id;
-        $taller['nombre'] = $taller['nombre'] ?? 'Taller';
-        $taller['descripcion'] = $taller['descripcion'] ?? '';
-        $taller['direccion'] = $taller['direccion'] ?? '';
-        $taller['telefono'] = $taller['telefono'] ?? '';
-        $taller['email'] = $taller['email'] ?? '';
-        $taller['verificado'] = $taller['verificado'] ?? false;
-        $taller['logo_url'] = $taller['logo_url'] ?? null;
-        $taller['latitud'] = $taller['latitud'] ?? null;
-        $taller['longitud'] = $taller['longitud'] ?? null;
+        $taller['nombre']      = strip_tags($taller['nombre'] ?? 'Taller');
+        $taller['descripcion'] = strip_tags($taller['descripcion'] ?? '');
+        $taller['direccion']   = strip_tags($taller['direccion'] ?? '');
+        $taller['telefono']    = strip_tags($taller['telefono'] ?? '');
+        $taller['email']       = strip_tags($taller['email'] ?? '');
+        $taller['verificado']  = $taller['verificado'] ?? false;
+        $taller['logo_url']    = $taller['logo_url'] ?? null;
+        $taller['latitud']     = $taller['latitud'] ?? null;
+        $taller['longitud']    = $taller['longitud'] ?? null;
         $taller['servicios_count'] = $taller['servicios_count'] ?? [];
-        $taller['horario'] = $taller['horario'] ?? [];
+        $taller['horario']     = $taller['horario'] ?? [];
 
         // 2. Cargar imágenes de la subcolección
         $imagenes = [];
@@ -123,6 +136,14 @@ class PerfilTallerController extends Controller
                 if ($resena->exists()) {
                     $r = $resena->data();
                     $r['id'] = $resena->id();
+
+                    if (isset($r['comentario']))       $r['comentario']       = strip_tags($r['comentario']);
+                    if (isset($r['usuario_nombre']))   $r['usuario_nombre']   = strip_tags($r['usuario_nombre']);
+                    if (isset($r['respuesta_taller']) && $r['respuesta_taller'] !== null) {
+                        $r['respuesta_taller'] = strip_tags($r['respuesta_taller']);
+                    }
+                    if (isset($r['usuario_inicial']))  $r['usuario_inicial']  = strip_tags($r['usuario_inicial']);
+
                     $resenas[] = $r;
                 }
             }
@@ -155,10 +176,10 @@ class PerfilTallerController extends Controller
             if (!is_array($s)) continue;
             if (empty($s['activo']) && isset($s['activo'])) continue; // solo activos si existe el campo
             $servicios[] = [
-                'nombre' => $s['nombre'] ?? 'Servicio',
-                'descripcion' => $s['descripcion'] ?? '',
+                'nombre' => strip_tags($s['nombre'] ?? 'Servicio'),
+                'descripcion' => strip_tags($s['descripcion'] ?? ''),
                 'precio' => $s['precio'] ?? null,
-                'icono' => $this->iconoParaServicio($s['nombre'] ?? ''),
+                'icono' => $this->iconoParaServicio(strip_tags($s['nombre'] ?? '')),
             ];
         }
 
@@ -295,11 +316,17 @@ class PerfilTallerController extends Controller
             return back()->with('error', 'Servicio no disponible. Intenta más tarde.');
         }
 
-        // 1. Validación
+        // 1. Validación con regex anti-XSS
         $validated = $request->validate([
             'rating' => 'required|integer|min:1|max:5',
-            'comentario' => 'required|string|min:10|max:1000',
-            'token' => 'nullable|string',
+            'comentario' => [
+                'required',
+                'string',
+                'min:10',
+                'max:1000',
+                'regex:/^[^\<\>\{\}]*$/u',
+            ],
+            'token' => 'nullable|string|max:200',
         ], [
             'rating.required' => 'Debes seleccionar una calificación.',
             'rating.min' => 'La calificación mínima es 1 estrella.',
@@ -307,6 +334,7 @@ class PerfilTallerController extends Controller
             'comentario.required' => 'El comentario es obligatorio.',
             'comentario.min' => 'El comentario debe tener al menos 10 caracteres.',
             'comentario.max' => 'El comentario no puede superar los 1000 caracteres.',
+            'comentario.regex' => 'El comentario contiene caracteres no permitidos (<, >, {, }).',
         ]);
 
         // 2. Usuario logueado
@@ -319,6 +347,15 @@ class PerfilTallerController extends Controller
                 ->with('error', 'Debes iniciar sesión para dejar una reseña.');
         }
 
+        // 🔒 Sanitización
+        $comentarioLimpio = $this->sanitize($validated['comentario'], 1000);
+        if (mb_strlen($comentarioLimpio) < 10) {
+            return back()->withInput()->with('error', 'El comentario no es válido después de limpiar caracteres no permitidos.');
+        }
+
+        $nombreLimpio = $this->sanitize($nombre, 150);
+        $emailLimpio = filter_var($email, FILTER_VALIDATE_EMAIL) ?: '';
+
         // 3. Verificar taller
         $tallerRef = $this->firestoreDb->collection('talleres')->document($id);
         $tallerDoc = $tallerRef->snapshot();
@@ -326,11 +363,10 @@ class PerfilTallerController extends Controller
             return back()->with('error', 'Taller no encontrado.');
         }
 
-        // 4. Verificar que no haya reseñado ya
+        // 4. Verificar duplicado (mismo código que antes)
         $tokenCalificacion = $validated['token'] ?? null;
         $ordenId = null;
 
-        // Si viene token, obtener el orden_id asociado
         if (!empty($tokenCalificacion)) {
             try {
                 $tokenDoc = $this->firestoreDb->collection('calificaciones')->document($tokenCalificacion)->snapshot();
@@ -342,11 +378,9 @@ class PerfilTallerController extends Controller
             }
         }
 
-        // Verificar si ya existe una reseña de este usuario para esta orden
         $yaResenoEstaOrden = false;
 
         if ($ordenId) {
-            // Bloqueo estricto: mismo usuario + misma orden
             $existentes = $tallerRef->collection('resenas')
                 ->where('usuario_id', '=', $uid)
                 ->where('orden_id', '=', $ordenId)
@@ -360,8 +394,6 @@ class PerfilTallerController extends Controller
                 }
             }
         } else {
-            // Fallback: si no hay token ni orden_id (reseña directa desde el perfil),
-            // bloqueamos solo si ya dejó una reseña "suelta" (sin orden) para el mismo taller
             $existentes = $tallerRef->collection('resenas')
                 ->where('usuario_id', '=', $uid)
                 ->limit(5)
@@ -370,8 +402,6 @@ class PerfilTallerController extends Controller
             foreach ($existentes as $doc) {
                 if ($doc->exists()) {
                     $data = $doc->data();
-                    // Si tiene orden_id, es de otro servicio, permitir
-                    // Si no tiene orden_id, es "suelta" → bloquear solo la primera
                     if (empty($data['orden_id'])) {
                         $yaResenoEstaOrden = true;
                         break;
@@ -385,23 +415,23 @@ class PerfilTallerController extends Controller
                 ->with('error', 'Ya has dejado una reseña para este servicio.');
         }
 
-        // 5. Iniciales del nombre
+        // 5. Iniciales (sobre el nombre limpio)
         $iniciales = '';
-        foreach (preg_split('/\s+/', trim($nombre)) as $p) {
+        foreach (preg_split('/\s+/', trim($nombreLimpio)) as $p) {
             if (!empty($p)) $iniciales .= mb_strtoupper(mb_substr($p, 0, 1));
             if (mb_strlen($iniciales) >= 2) break;
         }
         if (empty($iniciales)) $iniciales = 'U';
 
-        // 6. Crear reseña en subcolección
+        // 6. Guardar reseña (con datos limpios)
         try {
             $resenaData = [
                 'usuario_id' => $uid,
-                'usuario_nombre' => $nombre,
-                'usuario_email' => $email,
+                'usuario_nombre' => $nombreLimpio,
+                'usuario_email' => $emailLimpio,
                 'usuario_inicial' => $iniciales,
                 'rating' => (int) $validated['rating'],
-                'comentario' => trim($validated['comentario']),
+                'comentario' => $comentarioLimpio,
                 'respuesta_taller' => null,
                 'respuesta_fecha' => null,
                 'fecha' => Carbon::now()->toIso8601String(),
@@ -414,11 +444,8 @@ class PerfilTallerController extends Controller
             ];
 
             $tallerRef->collection('resenas')->add($resenaData);
-
-            // 7. Recalcular promedio en el doc del taller (contador incremental)
             $this->recalcularRating($tallerRef);
 
-            // 8. Marcar el token como usado si vino del correo
             if (!empty($validated['token'])) {
                 try {
                     $this->firestoreDb->collection('calificaciones')
