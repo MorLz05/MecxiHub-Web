@@ -18,11 +18,11 @@
                 </div>
             </div>
             <div class="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-white/20">
-                <div class="text-center">
+                {{-- <div class="text-center">
                     <p class="text-2xl font-bold">1,250</p>
                     <p class="text-[10px] text-blue-200/80 uppercase tracking-wider">Puntos MecxiHub</p>
                 </div>
-                <div class="w-px h-10 bg-white/20"></div>
+                <div class="w-px h-10 bg-white/20"></div> --}}
                 <div class="text-center">
                     <p class="text-2xl font-bold">Base</p>
                     <p class="text-[10px] text-blue-200/80 uppercase tracking-wider">Plan activo</p>
