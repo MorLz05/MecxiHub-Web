@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.firebase' => \App\Http\Middleware\FirebaseAuthMiddleware::class,
             'gestor' => CheckGestorRole::class,
             'taller' => \App\Http\Middleware\TallerMiddleware::class,
+            'no-cache' => \App\Http\Middleware\NoCacheHeaders::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
