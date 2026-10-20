@@ -1,20 +1,24 @@
-<aside
-    class="w-64 bg-gradient-to-b from-brand-darkblue via-brand-darkblue to-[#001c59] text-white flex flex-col justify-between hidden lg:flex flex-shrink-0 z-40 border-r border-white/5 shadow-2xl">
-    <div>
-        <!-- Logo Area -->
-        <div class="p-5">
-            <div
-                class="relative bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/15 shadow-xl shadow-black/20 flex justify-center items-center group transition duration-300 hover:border-white/25">
-                <div
-                    class="absolute inset-0 bg-brand-blue/20 rounded-2xl filter blur-md opacity-0 group-hover:opacity-100 transition duration-300">
-                </div>
+<!-- navbar.blade.php -->
+<aside id="sidebar"
+    class="w-64 bg-gradient-to-b from-brand-darkblue via-brand-darkblue to-[#001c59] text-white flex flex-col flex-shrink-0 z-50 border-r border-white/5 shadow-2xl sidebar-transition
+           fixed top-0 left-0 h-full -translate-x-full
+           lg:static lg:translate-x-0 lg:h-full">
+
+    <!-- Zona scrolleable: logo + nav + usuario -->
+    <div class="flex-1 min-h-0 overflow-y-auto sidebar-scroll">
+
+        <!-- Logo Area (más chico, scrollable) -->
+        <div class="px-5 pt-6 pb-2">
+            <a href="{{ route('gestor.cuenta') }}" class="block group">
                 <img src="{{ asset('images/logo/logo.png') }}" alt="MecxiHub Logo"
-                    class="h-10 w-auto object-contain relative z-10 drop-shadow-md">
-            </div>
+                    class="mx-auto w-auto max-h-16 max-w-[150px] object-contain rounded-xl drop-shadow-lg
+                           transition-transform duration-300 group-hover:scale-105
+                           group-hover:drop-shadow-[0_0_18px_rgba(0,102,255,0.55)]">
+            </a>
         </div>
 
         <!-- Navigation Links -->
-        <nav class="mt-2 px-4 space-y-2">
+        <nav class="mt-2 px-4 space-y-2 pb-4">
             <!-- Cuenta -->
             <a href="{{ route('gestor.cuenta') }}"
                 class="relative flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group {{ request()->routeIs('gestor.cuenta') ? 'bg-gradient-to-r from-brand-blue to-blue-600 text-white shadow-lg shadow-blue-500/30 border-t border-white/25 translate-x-1' : 'text-blue-100/70 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
@@ -90,10 +94,39 @@
                 <span>Volver al sitio</span>
             </a>
         </nav>
+
+        <!-- Usuario logueado (scrollable) -->
+        @php
+            $fbUser = session('firebase_user', []);
+            $nombre = $fbUser['nombre_completo'] ?? ($fbUser['email'] ?? 'Gestor');
+            $email = $fbUser['email'] ?? '';
+            $partes = preg_split('/\s+/', trim($nombre));
+            $iniciales = strtoupper(
+                (isset($partes[0]) ? mb_substr($partes[0], 0, 1) : '') .
+                    (isset($partes[1]) ? mb_substr($partes[1], 0, 1) : ''),
+            );
+        @endphp
+
+        <div class="px-4 pt-2 pb-4">
+            <div class="flex items-center gap-3 px-2 py-2 rounded-xl bg-white/5 border border-white/10">
+                <div
+                    class="w-10 h-10 rounded-full bg-brand-orange flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
+                    {{ $iniciales ?: '?' }}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-white truncate" title="{{ $nombre }}">
+                        {{ $nombre }}
+                    </p>
+                    <p class="text-xs text-blue-200/70 truncate" title="{{ $email }}">
+                        {{ $email }}
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Cerrar Sesión Footer -->
-    <div class="p-4 border-t border-white/10 bg-black/10">
+    <!-- Cerrar Sesión Footer (FIJO, no scrollea) -->
+    <div class="p-4 border-t border-white/10 bg-black/10 flex-shrink-0">
         <form action="{{ route('logout') }}" method="POST" class="block">
             @csrf
             <button type="submit"
@@ -104,3 +137,9 @@
         </form>
     </div>
 </aside>
+
+<!-- Mobile Toggle Button (visible solo en móvil) -->
+<button id="sidebar-toggle"
+    class="lg:hidden fixed top-4 left-4 z-[60] bg-brand-darkblue text-white p-3 rounded-xl shadow-lg transition-all duration-200">
+    <i class="fa-solid fa-bars text-xl"></i>
+</button>

@@ -53,12 +53,12 @@ Route::post('/password/update', [PasswordResetController::class, 'resetPassword'
     ->name('password.update');
 
 // ===== WEBHOOK STRIPE (público) =====
-Route::post('/stripe/webhook', [App\Http\Controllers\Taller\PagoController::class, 'webhook'])
+/* Route::post('/stripe/webhook', [App\Http\Controllers\Taller\PagoController::class, 'webhook'])
     ->name('stripe.webhook')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-
+ */
 // ===== RUTAS PROTEGIDAS (conductor) =====
-Route::middleware(['auth.firebase'])->group(function () {
+Route::middleware(['auth.firebase', 'no-cache'])->group(function () {
     Route::get('/dashboard', [FirebaseAuthController::class, 'conductorDashboard'])->name('dashboard');
 
     // ===== CUENTA DEL CONDUCTOR =====
@@ -139,7 +139,7 @@ Route::middleware(['auth.firebase'])->group(function () {
 
         Route::get('/planes', [App\Http\Controllers\Conductor\Dashboard\PlanController::class, 'index'])
         ->name('planes');
-        
+
         // Rutas de vehículos
         Route::get('/vehiculos', [VehiculoController::class, 'index'])->name('vehiculos');
         Route::get('/vehiculos/crear', [VehiculoController::class, 'create'])->name('vehiculos.crear');
@@ -176,7 +176,7 @@ Route::middleware(['auth.firebase'])->group(function () {
 });
 
 // ===== RUTAS DEL GESTOR MAESTRO =====
-Route::middleware(['auth.firebase', 'gestor'])->prefix('gestor')->name('gestor.')->group(function () {
+Route::middleware(['auth.firebase', 'gestor', 'no-cache'])->prefix('gestor')->name('gestor.')->group(function () {
     Route::get('/cuenta', function () {
         return view('GestorMaestro.Cuenta.principal');
     })->name('cuenta');
@@ -201,7 +201,7 @@ Route::middleware(['auth.firebase', 'gestor'])->prefix('gestor')->name('gestor.'
 });
 
 // ==================== RUTAS PROTEGIDAS (Taller / Administrador) ====================
-Route::middleware(['taller'])->prefix('taller')->name('taller.')->group(function () {
+Route::middleware(['taller', 'no-cache'])->prefix('taller')->name('taller.')->group(function () {
     // Dashboard / Resumen
     Route::get('/dashboard', [App\Http\Controllers\Taller\DashboardController::class, 'index'])->name('dashboard');
 

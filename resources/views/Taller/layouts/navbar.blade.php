@@ -1,26 +1,24 @@
 <!-- navbar.blade.php -->
 <aside id="sidebar"
-    class="w-64 bg-gradient-to-b from-brand-darkblue via-brand-darkblue to-[#001c59] text-white flex flex-col justify-between flex-shrink-0 z-50 border-r border-white/5 shadow-2xl sidebar-transition
+    class="w-64 bg-gradient-to-b from-brand-darkblue via-brand-darkblue to-[#001c59] text-white flex flex-col flex-shrink-0 z-50 border-r border-white/5 shadow-2xl sidebar-transition
            fixed top-0 left-0 h-full -translate-x-full
            lg:static lg:translate-x-0 lg:h-full">
 
-    <div class="flex flex-col flex-1 min-h-0">
-        <!-- Logo Area -->
-        <div class="p-5 flex-shrink-0">
-            <a href="{{ route('taller.dashboard') }}"
-                class="relative block bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/15 shadow-xl shadow-black/20 group transition duration-300 hover:border-white/25">
-                <div
-                    class="absolute inset-0 bg-brand-blue/20 rounded-2xl filter blur-md opacity-0 group-hover:opacity-100 transition duration-300">
-                </div>
-                <div class="flex justify-center items-center relative z-10">
-                    <img src="{{ asset('images/logo/logo.png') }}" alt="MecxiHub Logo"
-                        class="h-10 w-auto object-contain drop-shadow-md">
-                </div>
+    <!-- Zona scrolleable: logo + nav + usuario -->
+    <div class="flex-1 min-h-0 overflow-y-auto sidebar-scroll">
+
+        <!-- Logo Area (más chico, scrollable) -->
+        <div class="px-5 pt-6 pb-2">
+            <a href="{{ route('taller.dashboard') }}" class="block group">
+                <img src="{{ asset('images/logo/logo.png') }}" alt="MecxiHub Logo"
+                    class="mx-auto w-auto max-h-16 max-w-[150px] object-contain rounded-xl drop-shadow-lg
+                           transition-transform duration-300 group-hover:scale-105
+                           group-hover:drop-shadow-[0_0_18px_rgba(0,102,255,0.55)]">
             </a>
         </div>
 
         <!-- Navigation Links -->
-        <nav class="mt-2 px-4 space-y-2 overflow-y-auto sidebar-scroll flex-1 min-h-0">
+        <nav class="mt-2 px-4 space-y-2 pb-4">
             <!-- Resumen -->
             <a href="{{ route('taller.dashboard') }}"
                 class="relative flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group {{ request()->routeIs('taller.dashboard') ? 'bg-gradient-to-r from-brand-blue to-blue-600 text-white shadow-lg shadow-blue-500/30 border-t border-white/25 translate-x-1' : 'text-blue-100/70 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
@@ -51,7 +49,7 @@
                 <span class="tracking-wide">Información</span>
             </a>
 
-            <!-- Órdenes con badge -->
+            <!-- Órdenes -->
             <a href="{{ route('taller.ordenes') }}"
                 class="relative flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group {{ request()->routeIs('taller.ordenes*') ? 'bg-gradient-to-r from-brand-blue to-blue-600 text-white shadow-lg shadow-blue-500/30 border-t border-white/25 translate-x-1' : 'text-blue-100/70 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
 
@@ -109,8 +107,6 @@
                     <i class="fa-solid fa-star text-base"></i>
                 </div>
                 <span class="tracking-wide">Comentarios</span>
-                {{-- <span
-                    class="ml-auto bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">4.8</span> --}}
             </a>
 
             <!-- Separador -->
@@ -150,7 +146,36 @@
         </nav>
     </div>
 
-    <!-- Cerrar Sesión Footer -->
+    <!-- Usuario logueado (scrollable) -->
+    @php
+        $fbUser = session('firebase_user', []);
+        $nombre = $fbUser['nombre_completo'] ?? ($fbUser['email'] ?? 'Usuario');
+        $email = $fbUser['email'] ?? '';
+        $partes = preg_split('/\s+/', trim($nombre));
+        $iniciales = strtoupper(
+            (isset($partes[0]) ? mb_substr($partes[0], 0, 1) : '') .
+                (isset($partes[1]) ? mb_substr($partes[1], 0, 1) : ''),
+        );
+    @endphp
+
+    <div class="px-4 pt-2 pb-4">
+        <div class="flex items-center gap-3 px-2 py-2 rounded-xl bg-white/5 border border-white/10">
+            <div
+                class="w-10 h-10 rounded-full bg-brand-orange flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">
+                {{ $iniciales ?: '?' }}
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-white truncate" title="{{ $nombre }}">
+                    {{ $nombre }}
+                </p>
+                <p class="text-xs text-blue-200/70 truncate" title="{{ $email }}">
+                    {{ $email }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cerrar Sesión Footer (FIJO, no scrollea) -->
     <div class="p-4 border-t border-white/10 bg-black/10 flex-shrink-0">
         <form action="{{ route('logout') }}" method="POST" class="block">
             @csrf
@@ -194,12 +219,10 @@
 
         function syncWithViewport() {
             if (isDesktop()) {
-                // En desktop: siempre visible, sin overlay, sin scroll bloqueado
                 sidebar.classList.remove('-translate-x-full');
                 overlay.classList.add('hidden');
                 document.body.style.overflow = '';
             } else {
-                // En móvil: oculta por defecto
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.add('hidden');
                 document.body.style.overflow = '';
@@ -221,12 +244,11 @@
 
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && !isDesktop() && !sidebar.classList.contains(
-                '-translate-x-full')) {
+                    '-translate-x-full')) {
                 closeSidebar();
             }
         });
 
-        // Listener moderno para cambios de viewport
         mq.addEventListener('change', syncWithViewport);
     });
 </script>
