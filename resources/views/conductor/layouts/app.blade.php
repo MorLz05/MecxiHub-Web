@@ -18,8 +18,11 @@
     <!-- FontAwesome para Íconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-     <!-- Alpine.js -->
+    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0d4cd3">
 
     <!-- Configuración personalizada de Tailwind -->
     <script>
@@ -56,6 +59,17 @@
     {{-- Para scripts específicos de la página --}}
     @stack('scripts')
 
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registrado con éxito:', registration.scope);
+                }, function(err) {
+                    console.log('Fallo al registrar ServiceWorker:', err);
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>

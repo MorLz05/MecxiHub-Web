@@ -154,6 +154,8 @@ class ImagenController extends Controller
 
             Log::info('Logo subido para taller: ' . $tallerId);
 
+            \Illuminate\Support\Facades\Cache::forget('taller_imagenes_' . $tallerId);
+
             return back()->with('success_logo', 'Logo actualizado exitosamente.');
         } catch (\Exception $e) {
             Log::error('Error subiendo logo: ' . $e->getMessage());
@@ -195,6 +197,7 @@ class ImagenController extends Controller
             $tallerSession['logo_path'] = null;
             session(['taller_data' => $tallerSession]);
 
+            \Illuminate\Support\Facades\Cache::forget('taller_imagenes_' . $tallerId);
             return back()->with('success_logo', 'Logo eliminado.');
         } catch (\Exception $e) {
             Log::error('Error eliminando logo: ' . $e->getMessage());
@@ -267,6 +270,7 @@ class ImagenController extends Controller
 
             Log::info("Se subieron {$subidas} imágenes al taller: " . $tallerId);
 
+            \Illuminate\Support\Facades\Cache::forget('taller_imagenes_' . $tallerId);
             return back()->with('success_imagenes', $subidas . ' imagen(es) subida(s) exitosamente.');
         } catch (\Exception $e) {
             Log::error('Error subiendo imágenes: ' . $e->getMessage());
@@ -309,6 +313,7 @@ class ImagenController extends Controller
 
             $ref->delete();
 
+            \Illuminate\Support\Facades\Cache::forget('taller_imagenes_' . $tallerId);
             return back()->with('success_imagenes', 'Imagen eliminada.');
         } catch (\Exception $e) {
             Log::error('Error eliminando imagen: ' . $e->getMessage());

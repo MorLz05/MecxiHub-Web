@@ -15,7 +15,8 @@ Route::get('/', [App\Http\Controllers\Conductor\Dashboard\HomeController::class,
 
 // ===== AUTENTICACIÓN =====
 Route::get('/login', [FirebaseAuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [FirebaseAuthController::class, 'login']);
+Route::post('/login', [FirebaseAuthController::class, 'login'])
+    ->middleware('throttle:5,1');
 Route::get('/register', [FirebaseAuthController::class, 'showRegisterForm'])->name('register');
 Route::post('/register', [FirebaseAuthController::class, 'register']);
 Route::post('/logout', [FirebaseAuthController::class, 'logout'])->name('logout');
@@ -46,8 +47,12 @@ Route::post('/calificacion/{token}', [CalificacionController::class, 'store'])->
 Route::post('/password/email', [PasswordResetController::class, 'sendResetLink'])
     ->name('password.email');
 
+/* Route::get('/password/reset-form', [PasswordResetController::class, 'showResetForm'])
+    ->name('password.reset'); */
+
 Route::get('/password/reset-form', [PasswordResetController::class, 'showResetForm'])
-    ->name('password.reset');
+    ->name('password.reset')
+    ->middleware('cache.headers:no_store');
 
 Route::post('/password/update', [PasswordResetController::class, 'resetPassword'])
     ->name('password.update');
@@ -138,7 +143,7 @@ Route::middleware(['auth.firebase', 'no-cache'])->group(function () {
         })->name('informacion-personal');
 
         Route::get('/planes', [App\Http\Controllers\Conductor\Dashboard\PlanController::class, 'index'])
-        ->name('planes');
+            ->name('planes');
 
         // Rutas de vehículos
         Route::get('/vehiculos', [VehiculoController::class, 'index'])->name('vehiculos');

@@ -41,11 +41,13 @@ trait FirebaseTrait
         }
     }
 
-    protected function getUserData($uid)
+     protected function getUserData($uid)
     {
         try {
+            // Ya no inicializamos Firebase aquí, asumimos que $this->firestore ya fue inyectado
+            // o que el controlador que lo usa lo tiene.
             if (!$this->firestore) {
-                $this->initializeFirebase();
+                throw new \Exception('Firestore no inicializado');
             }
 
             $db = $this->firestore->collection('usuarios')->document($uid)->snapshot();
