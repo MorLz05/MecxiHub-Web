@@ -13,10 +13,10 @@
 
                     <!-- Título MecxiHub personalizado -->
                     <div class="text-center mb-8">
-                        <h2 class="text-3xl font-black">
-                            <span class="text-[#0039A6]">Mecxi</span><span class="text-[#FF6B00]">Hub</span>
-                        </h2>
-                        <p class="text-gray-500 text-sm mt-2">Accede a tu cuenta para gestionar tus servicios y mucho más.
+                        <h1 class="text-3xl font-black">
+                            <span class="text-blue-800">Mecxi</span><span class="text-orange-600">Hub</span>
+                        </h1>
+                        <p class="text-gray-700 text-sm mt-2">Accede a tu cuenta para gestionar tus servicios y mucho más.
                         </p>
                     </div>
 
@@ -37,12 +37,12 @@
                             <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5">Correo
                                 Electrónico</label>
                             <div class="relative flex items-center">
-                                <span class="absolute left-4 text-gray-400">
+                                <span class="absolute left-4 text-gray-600">
                                     <i class="fa-solid fa-envelope"></i>
                                 </span>
                                 <input type="email" id="email" name="email" required
                                     placeholder="ejemplo@correo.com"
-                                    class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-400 text-base bg-gray-50/50 shadow-inner transition">
+                                    class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-600 text-base bg-gray-50/50 shadow-inner transition">
                             </div>
                         </div>
 
@@ -52,14 +52,14 @@
                                 <label for="password" class="block text-sm font-semibold text-gray-700">Contraseña</label>
                             </div>
                             <div class="relative flex items-center">
-                                <span class="absolute left-4 text-gray-400">
+                                <span class="absolute left-4 text-gray-600">
                                     <i class="fa-solid fa-lock"></i>
                                 </span>
                                 <input type="password" id="password" name="password" required
                                     placeholder="Ingresa tu contraseña"
-                                    class="w-full pl-11 pr-12 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-400 text-base bg-gray-50/50 shadow-inner transition">
-                                <button type="button" id="togglePasswordLogin"
-                                    class="absolute right-4 text-gray-400 hover:text-gray-600 transition">
+                                    class="w-full pl-11 pr-12 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-600 text-base bg-gray-50/50 shadow-inner transition">
+                                <button type="button" id="togglePasswordLogin" aria-label="Mostrar u ocultar contraseña"
+                                    class="absolute right-2 p-3 text-gray-400 hover:text-gray-600 transition">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                             </div>
@@ -72,8 +72,10 @@
                                     class="w-4 h-4 rounded border-gray-300 text-[#0039A6] focus:ring-[#0039A6]">
                                 <span class="text-sm text-gray-600 font-medium">Recordarme</span>
                             </label>
-                            <a href="#" class="text-sm font-semibold text-[#0039A6] hover:underline">¿Olvidaste tu
-                                contraseña?</a>
+                            <button type="button" onclick="openPasswordResetModal()"
+                                class="text-sm font-semibold text-[#0039A6] hover:underline">
+                                ¿Olvidaste tu contraseña?
+                            </button>
                         </div>
 
                         <!-- Submit Button -->
@@ -87,7 +89,7 @@
                     <!-- Separador -->
                     <div class="flex items-center gap-4 my-6">
                         <div class="flex-1 h-px bg-gray-200"></div>
-                        <span class="text-xs text-gray-400 font-medium">o continúa con</span>
+                        <span class="text-xs text-gray-600 font-medium">o continúa con</span>
                         <div class="flex-1 h-px bg-gray-200"></div>
                     </div>
 
@@ -103,10 +105,10 @@
 
                     <!-- Footer Link -->
                     <div class="mt-8 pt-6 border-t border-gray-100 text-center">
-                        <p class="text-sm text-gray-500">
+                        <p class="text-sm text-gray-700">
                             ¿No tienes cuenta?
                             <a href="{{ route('register') }}"
-                                class="text-[#FF6B00] font-bold hover:underline ml-1">Regístrate ahora</a>
+                                class="text-orange-700 font-bold hover:underline ml-1">Regístrate ahora</a>
                         </p>
                     </div>
                 </div>
@@ -189,9 +191,9 @@
                                     respuestas al instante.</p>
                             </div>
                             <a href="{{ route('asistente.ia') }}"
-                                class="bg-[#FF6B00] hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition flex items-center gap-2 shadow-lg shadow-orange-500/30 whitespace-nowrap">
-                                <i class="fa-solid fa-comment-dots"></i>
-                                Hablar con IA
+                                class="bg-orange-700 hover:bg-orange-800 text-white opacity-100 px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 shadow-lg whitespace-nowrap">
+                                <i class="fa-solid fa-comment-dots text-white"></i>
+                                <span class="text-white">Hablar con IA</span>
                             </a>
                         </div>
                     </div>
@@ -235,8 +237,8 @@
         <div id="passwordResetModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
                 <!-- Botón cerrar -->
-                <button onclick="closePasswordResetModal()"
-                    class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition">
+                <button onclick="closePasswordResetModal()" aria-label="Cerrar ventana de recuperación"
+                    class="absolute right-4 top-4 text-gray-600 hover:text-gray-600 transition">
                     <i class="fa-solid fa-times text-xl"></i>
                 </button>
 
@@ -246,7 +248,7 @@
                         <i class="fa-solid fa-key text-2xl text-[#0039A6]"></i>
                     </div>
                     <h3 class="text-xl font-bold text-gray-800">¿Olvidaste tu contraseña?</h3>
-                    <p class="text-sm text-gray-500 mt-1">Ingresa tu correo y te enviaremos un enlace para restablecerla.
+                    <p class="text-sm text-gray-700 mt-1">Ingresa tu correo y te enviaremos un enlace para restablecerla.
                     </p>
                 </div>
 
@@ -264,12 +266,13 @@
                         <label for="reset_email" class="block text-sm font-semibold text-gray-700 mb-1.5">Correo
                             Electrónico</label>
                         <div class="relative flex items-center">
-                            <span class="absolute left-4 text-gray-400">
+                            <span class="absolute left-4 text-gray-600">
                                 <i class="fa-solid fa-envelope"></i>
                             </span>
+                            <input type="hidden" name="form_type" value="reset">
                             <input type="email" id="reset_email" name="email" required
                                 placeholder="ejemplo@correo.com"
-                                class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-400 text-base bg-gray-50/50 shadow-inner transition">
+                                class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-600 text-base bg-gray-50/50 shadow-inner transition">
                         </div>
                     </div>
 
@@ -281,7 +284,7 @@
                 </form>
 
                 <div class="mt-4 text-center">
-                    <button onclick="closePasswordResetModal()" class="text-sm text-gray-500 hover:text-gray-700">
+                    <button onclick="closePasswordResetModal()" class="text-sm text-gray-700 hover:text-gray-700">
                         Volver al inicio de sesión
                     </button>
                 </div>
@@ -338,17 +341,16 @@
                 forgotLink.setAttribute('onclick', 'openPasswordResetModal()');
             }
             const urlParams = new URLSearchParams(window.location.search);
-            if(
+            if (
                 urlParams.get('modal') === 'recuperar' ||
                 urlParams.has('recuperar') ||
                 window.location.hash === '#recuperar'
-            ){
+            ) {
                 openPasswordResetModal();
             }
         });
 
-        // Si hay errores, abrir el modal automáticamente
-        @if ($errors->has('email'))
+        @if ($errors->any() && (session('form_type') === 'reset' || old('form_type') === 'reset'))
             document.addEventListener('DOMContentLoaded', function() {
                 openPasswordResetModal();
             });

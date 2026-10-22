@@ -90,18 +90,8 @@ class OrdenController extends Controller
      */
     private function obtenerTallerIdDelUsuario()
     {
-        $user = session('firebase_user');
-        if (!$user || !$this->firestoreDb) return null;
-
-        try {
-            $usuarioDoc = $this->firestoreDb->collection('usuarios')->document($user['uid'])->snapshot();
-            if ($usuarioDoc->exists()) {
-                return $usuarioDoc->data()['taller_id'] ?? null;
-            }
-        } catch (\Exception $e) {
-            Log::error('Error obteniendo taller_id: ' . $e->getMessage());
-        }
-        return null;
+        // Si el login ya guardó el taller_id, esto es instantáneo (0ms)
+        return session('firebase_user.taller_id');
     }
 
     /**
@@ -123,82 +113,99 @@ class OrdenController extends Controller
             ]);
         }
 
-        $search = $request->input('search', '');
+        $search = trim($request->input('search', ''));
         $filterEstado = $request->input('estado', '');
-        $page = (int) $request->input('page', 1);
+        $page = max(1, (int) $request->input('page', 1));
         $perPage = 15;
+        $offset = ($page - 1) * $perPage;
 
-        $ordenes = [];
+        // 🔥 CACHÉ: Si no hay búsqueda, guardamos el resultado por 60 segundos
+        if (empty($search)) {
+            $cacheKey = "ordenes_{$tallerId}_{$page}_{$filterEstado}";
 
-        try {
-            $snapshot = $this->firestoreDb
-                ->collection('ordenes_trabajo')
-                ->where('taller_id', '=', $tallerId)
-                ->documents();
+            $data = \Illuminate\Support\Facades\Cache::remember($cacheKey, 60, function () use ($tallerId, $filterEstado, $perPage, $offset, $page) {
+                $ordenes = [];
+                $totalPages = 1;
 
-            foreach ($snapshot as $doc) {
-                if (!$doc->exists()) continue;
-                $data = $doc->data();
-                $data['id'] = $doc->id();
-                $ordenes[] = $data;
-            }
-        } catch (\Exception $e) {
-            // Si la colección no existe, se trata como vacía
-            Log::warning('Colección ordenes_trabajo vacía o inaccesible: ' . $e->getMessage());
+                try {
+                    $query = $this->firestoreDb->collection('ordenes_trabajo')
+                        ->where('taller_id', '=', $tallerId);
+
+                    if (!empty($filterEstado)) {
+                        $query = $query->where('estado', '=', $filterEstado);
+                    }
+
+                    $query = $query->orderBy('fecha_orden', 'desc')
+                        ->limit($perPage + 1)->offset($offset);
+
+                    $snapshot = $query->documents();
+
+                    foreach ($snapshot as $doc) {
+                        if (!$doc->exists()) continue;
+                        $data = $doc->data();
+                        $data['id'] = $doc->id();
+                        $ordenes[] = $data;
+                    }
+
+                    if (count($ordenes) > $perPage) {
+                        array_pop($ordenes);
+                        $totalPages = $page + 1;
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error cargando órdenes: ' . $e->getMessage());
+                }
+
+                return [
+                    'ordenes' => $ordenes,
+                    'totalPages' => $totalPages
+                ];
+            });
+
+            $ordenes = $data['ordenes'];
+            $totalPages = $data['totalPages'];
+        } else {
+            // Búsqueda en PHP (sin caché para que sea tiempo real)
             $ordenes = [];
+            $totalPages = 1;
+            try {
+                $query = $this->firestoreDb->collection('ordenes_trabajo')
+                    ->where('taller_id', '=', $tallerId)
+                    ->orderBy('fecha_orden', 'desc')
+                    ->limit(100); // Traemos 100 para buscar
+
+                $snapshot = $query->documents();
+                foreach ($snapshot as $doc) {
+                    if (!$doc->exists()) continue;
+                    $data = $doc->data();
+                    $data['id'] = $doc->id();
+                    $ordenes[] = $data;
+                }
+
+                $ordenes = array_filter($ordenes, function ($orden) use ($search) {
+                    $campos = ['folio', 'cliente_nombre', 'cliente_email', 'cliente_telefono'];
+                    foreach ($campos as $c) {
+                        if (isset($orden[$c]) && stripos((string) $orden[$c], $search) !== false) return true;
+                    }
+                    if (isset($orden['vehiculo']['placas']) && stripos($orden['vehiculo']['placas'], $search) !== false) return true;
+                    if (isset($orden['vehiculo']['marca']) && stripos($orden['vehiculo']['marca'], $search) !== false) return true;
+                    return false;
+                });
+
+                $total = count($ordenes);
+                $totalPages = max(1, (int) ceil($total / $perPage));
+                $ordenes = array_slice($ordenes, $offset, $perPage);
+            } catch (\Exception $e) {
+                Log::error('Error en búsqueda de órdenes: ' . $e->getMessage());
+            }
         }
 
-        // Filtros
-        $ordenes = array_filter($ordenes, function ($orden) use ($search, $filterEstado) {
-            if ($filterEstado !== '' && ($orden['estado'] ?? '') !== $filterEstado) {
-                return false;
-            }
-
-            if (!empty($search)) {
-                $match = false;
-                $campos = ['folio', 'cliente_nombre', 'cliente_email', 'cliente_telefono'];
-                foreach ($campos as $c) {
-                    if (isset($orden[$c]) && stripos((string) $orden[$c], $search) !== false) {
-                        $match = true;
-                        break;
-                    }
-                }
-                // Buscar también por placa / marca / modelo del vehículo
-                if (!$match && isset($orden['vehiculo']['placas']) && stripos($orden['vehiculo']['placas'], $search) !== false) {
-                    $match = true;
-                }
-                if (!$match && isset($orden['vehiculo']['marca']) && stripos($orden['vehiculo']['marca'], $search) !== false) {
-                    $match = true;
-                }
-                if (!$match) return false;
-            }
-
-            return true;
-        });
-
-        // Ordenar por fecha_orden descendente (más reciente primero)
-        usort($ordenes, function ($a, $b) {
-            $dateA = isset($a['fecha_orden']) ? strtotime($a['fecha_orden']) : 0;
-            $dateB = isset($b['fecha_orden']) ? strtotime($b['fecha_orden']) : 0;
-            return $dateB - $dateA;
-        });
-
-        // Paginación
-        $total = count($ordenes);
-        $totalPages = max(1, (int) ceil($total / $perPage));
-        if ($page < 1) $page = 1;
-        if ($page > $totalPages) $page = $totalPages;
-
-        $offset = ($page - 1) * $perPage;
-        $ordenesPaginadas = array_slice($ordenes, $offset, $perPage);
-
         return view('taller.ordenes.index', [
-            'ordenes' => $ordenesPaginadas,
+            'ordenes' => $ordenes,
             'search' => $search,
             'filterEstado' => $filterEstado,
             'page' => $page,
             'totalPages' => $totalPages,
-            'total' => $total,
+            'total' => count($ordenes),
             'sinTaller' => false,
         ]);
     }
@@ -520,6 +527,7 @@ class OrdenController extends Controller
 
             Log::info('Orden creada: ' . $folio);
 
+            \Illuminate\Support\Facades\Cache::flush();
             return redirect()
                 ->route('taller.ordenes.editar', ['id' => $folio])
                 ->with('success', 'Orden ' . $folio . ' creada exitosamente.'
@@ -941,6 +949,7 @@ class OrdenController extends Controller
 
             Log::info('Orden actualizada: ' . $id);
 
+            \Illuminate\Support\Facades\Cache::flush();
             return redirect()
                 ->route('taller.ordenes')
                 ->with('success', 'Orden actualizada exitosamente.');
@@ -1049,6 +1058,8 @@ class OrdenController extends Controller
                     // No rompemos la respuesta si falla la notificación
                 }
             }
+
+            \Illuminate\Support\Facades\Cache::flush();
 
             return response()->json([
                 'success' => true,

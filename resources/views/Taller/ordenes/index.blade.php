@@ -103,7 +103,7 @@
     {{-- Contador --}}
     <div class="flex items-center justify-between mb-4">
         <p class="text-sm text-gray-600">
-            <span class="font-semibold">{{ $total ?? 0 }}</span> órdenes encontradas
+            <span class="font-semibold">Mostrando {{ count($ordenes) }}</span> órdenes (Página {{ $page }})
         </p>
     </div>
 

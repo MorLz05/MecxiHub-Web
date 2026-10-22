@@ -132,7 +132,7 @@
         </nav>
 
         <!-- Mobile Menu Button -->
-        <button id="mobile-menu-button"
+        <button id="mobile-menu-button" aria-label="Abrir menú de usuario"
             class="lg:hidden flex items-center text-gray-700 hover:text-brand-blue transition p-2">
             <i class="fa-solid fa-bars text-2xl"></i>
         </button>

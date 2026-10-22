@@ -61,85 +61,99 @@ class InformacionController extends Controller
     {
         $user = session('firebase_user');
         $tallerData = [];
-        $tallerId = null;
+        $tallerId = session('firebase_user.taller_id');
         $bloques = [];
+        $diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
 
-        if ($this->firestoreDb) {
+if (!$tallerId) {
+        // Redirigir o mostrar error
+        return redirect()->route('login')->with('error', 'No tienes un taller asignado.');
+    }
+
+        if ($this->firestoreDb && $tallerId) {
             try {
-                $usuariosRef = $this->firestoreDb->collection('usuarios')->document($user['uid']);
-                $usuarioSnapshot = $usuariosRef->snapshot();
+                $tallerData = session('taller_data');
 
-                if ($usuarioSnapshot->exists()) {
-                    $usuarioData = $usuarioSnapshot->data();
-                    $tallerId = $usuarioData['taller_id'] ?? null;
+                // 🔥 FORZAMOS LA CARGA SI FALTA ALGÚN DATO CLAVE (como la dirección o descripción)
+                if (!$tallerData || !isset($tallerData['direccion'])) {
+                    $tallerRef = $this->firestoreDb->collection('talleres')->document($tallerId);
+                    $tallerSnapshot = $tallerRef->snapshot();
 
-                    if ($tallerId) {
-                        $tallerRef = $this->firestoreDb->collection('talleres')->document($tallerId);
-                        $tallerSnapshot = $tallerRef->snapshot();
+                    if ($tallerSnapshot->exists()) {
+                        $tallerData = $tallerSnapshot->data();
+                        $tallerData['id'] = $tallerId;
 
-                        if ($tallerSnapshot->exists()) {
-                            $tallerData = $tallerSnapshot->data();
-                            $tallerData['id'] = $tallerId;
+                        // Asegurar campos
+                        $tallerData['descripcion'] = ($tallerData['descripcion'] ?? '');
+                        $tallerData['servicios_count'] = $tallerData['servicios_count'] ?? [];
+                        $tallerData['horario'] = $tallerData['horario'] ?? [];
+                        $tallerData['verificado'] = $tallerData['verificado'] ?? false;
+                        $tallerData['email'] = $tallerData['email'] ?? '';
+                        $tallerData['direccion'] = $tallerData['direccion'] ?? ''; // 👈 Aseguramos dirección
 
-                            // Asegurar que todos los campos existan
-                            $tallerData['descripcion'] = ($tallerData['descripcion'] ?? '');
-                            $tallerData['servicios_count'] = $tallerData['servicios_count'] ?? [];
-                            $tallerData['horario'] = $tallerData['horario'] ?? [];
-                            $tallerData['verificado'] = $tallerData['verificado'] ?? false;
-                            $tallerData['email'] = $tallerData['email'] ?? '';
-
-                            // 🔑 Normalizar "plan" a string (nombre del plan)
-                            $planRaw = $tallerData['plan'] ?? null;
-                            if (is_array($planRaw)) {
-                                $planNombre = $planRaw['nombre']
-                                    ?? $planRaw['name']
-                                    ?? $planRaw['titulo']
-                                    ?? null;
-                            } elseif (is_string($planRaw) && $planRaw !== '') {
-                                $planNombre = $planRaw;
-                            } else {
-                                $planNombre = null;
-                            }
-                            $tallerData['plan'] = $planNombre;
-
-                            // Cargar imágenes del establecimiento
-                            $tallerData['imagenes'] = [];
-                            try {
-                                $imagenesSnapshot = $this->firestoreDb
-                                    ->collection('talleres')
-                                    ->document($tallerId)
-                                    ->collection('imagenes')
-                                    ->documents();
-
-                                foreach ($imagenesSnapshot as $imgDoc) {
-                                    if (!$imgDoc->exists()) continue;
-                                    $imgData = $imgDoc->data();
-                                    $imgData['id'] = $imgDoc->id();
-                                    $tallerData['imagenes'][] = $imgData;
-                                }
-
-                                // Ordenar por fecha de subida descendente
-                                usort($tallerData['imagenes'], function ($a, $b) {
-                                    return strtotime($b['fecha_subida'] ?? '0') - strtotime($a['fecha_subida'] ?? '0');
-                                });
-                            } catch (\Exception $e) {
-                                Log::warning('No se pudieron cargar imágenes del taller: ' . $e->getMessage());
-                            }
-
-                            // Asegurar campos del logo
-                            $tallerData['logo_url'] = $tallerData['logo_url'] ?? null;
-
-                            session(['taller_data' => $tallerData]);
+                        // Normalizar "plan"
+                        $planRaw = $tallerData['plan'] ?? null;
+                        if (is_array($planRaw)) {
+                            $planNombre = $planRaw['nombre'] ?? $planRaw['name'] ?? $planRaw['titulo'] ?? null;
+                        } elseif (is_string($planRaw) && $planRaw !== '') {
+                            $planNombre = $planRaw;
+                        } else {
+                            $planNombre = null;
                         }
+                        $tallerData['plan'] = $planNombre;
+                        $tallerData['logo_url'] = $tallerData['logo_url'] ?? null;
+
+                        // Guardamos TODO en sesión
+                        session(['taller_data' => $tallerData]);
                     }
                 }
+
+                // Cargar imágenes al vuelo (esto no pesa)
+                $tallerData['imagenes'] = \Illuminate\Support\Facades\Cache::remember('taller_imagenes_' . $tallerId, 300, function () use ($tallerId) {
+                    $imagenes = [];
+                    try {
+                        $imagenesSnapshot = $this->firestoreDb
+                            ->collection('talleres')
+                            ->document($tallerId)
+                            ->collection('imagenes')
+                            ->documents();
+
+                        foreach ($imagenesSnapshot as $imgDoc) {
+                            if (!$imgDoc->exists()) continue;
+                            $imgData = $imgDoc->data();
+                            $imgData['id'] = $imgDoc->id();
+                            $imagenes[] = $imgData;
+                        }
+
+                        usort($imagenes, function ($a, $b) {
+                            return strtotime($b['fecha_subida'] ?? '0') - strtotime($a['fecha_subida'] ?? '0');
+                        });
+                    } catch (\Exception $e) {
+                        Log::warning('No se pudieron cargar imágenes: ' . $e->getMessage());
+                    }
+                    return $imagenes;
+                });
+                $imagenesSnapshot = $this->firestoreDb
+                    ->collection('talleres')
+                    ->document($tallerId)
+                    ->collection('imagenes')
+                    ->documents();
+
+                foreach ($imagenesSnapshot as $imgDoc) {
+                    if (!$imgDoc->exists()) continue;
+                    $imgData = $imgDoc->data();
+                    $imgData['id'] = $imgDoc->id();
+                    $tallerData['imagenes'][] = $imgData;
+                }
+
+                usort($tallerData['imagenes'], function ($a, $b) {
+                    return strtotime($b['fecha_subida'] ?? '0') - strtotime($a['fecha_subida'] ?? '0');
+                });
             } catch (\Exception $e) {
                 Log::error('Error obteniendo datos del taller: ' . $e->getMessage());
             }
         }
 
-        // Procesar horario para construir bloques
-        $diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
         $horarioActual = $tallerData['horario'] ?? [];
         $bloques = [];
 
@@ -291,6 +305,7 @@ class InformacionController extends Controller
             }
             session(['taller_data' => $tallerData]);
 
+            session()->forget('taller_data');
             return back()->with('success', 'Información del taller actualizada exitosamente.');
         } catch (\Exception $e) {
             Log::error('Error actualizando información del taller: ' . $e->getMessage());
@@ -328,6 +343,8 @@ class InformacionController extends Controller
             $tallerData = session('taller_data', []);
             $tallerData['horario'] = $horario;
             session(['taller_data' => $tallerData]);
+
+            session()->forget('taller_data');
 
             return back()->with('success_horario', 'Horario del taller actualizado exitosamente.');
         } catch (\Exception $e) {
@@ -473,6 +490,7 @@ class InformacionController extends Controller
 
             Log::info('Servicio agregado al taller: ' . $tallerId);
 
+            session()->forget('taller_data');
             return back()->with('success', 'Servicio agregado exitosamente.');
         } catch (\Exception $e) {
             Log::error('Error agregando servicio: ' . $e->getMessage());
@@ -513,6 +531,7 @@ class InformacionController extends Controller
 
             Log::info('Servicio eliminado del taller: ' . $tallerId);
 
+            session()->forget('taller_data');
             return back()->with('success', 'Servicio eliminado exitosamente.');
         } catch (\Exception $e) {
             Log::error('Error eliminando servicio: ' . $e->getMessage());
@@ -555,6 +574,7 @@ class InformacionController extends Controller
 
             Log::info('Estado del servicio actualizado en taller: ' . $tallerId);
 
+            session()->forget('taller_data');
             return back()->with('success', 'Estado del servicio actualizado.');
         } catch (\Exception $e) {
             Log::error('Error actualizando estado del servicio: ' . $e->getMessage());

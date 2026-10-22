@@ -8,10 +8,10 @@
 
             <!-- Título -->
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-black">
-                    <span class="text-[#0039A6]">Mecxi</span><span class="text-[#FF6B00]">Hub</span>
-                </h2>
-                <p class="text-gray-500 text-sm mt-2">Ingresa tu nueva contraseña</p>
+                <h1 class="text-3xl font-black">
+                    <span class="text-blue-800">Mecxi</span><span class="text-orange-600">Hub</span>
+                </h1>
+                <p class="text-gray-600 text-sm mt-2">Ingresa tu nueva contraseña</p>
             </div>
 
             <!-- Mensajes de error/success -->
@@ -44,11 +44,17 @@
                         <label for="password" class="block text-sm font-semibold text-gray-700 mb-1.5">Nueva
                             contraseña</label>
                         <div class="relative flex items-center">
-                            <span class="absolute left-4 text-gray-400">
+                            <span class="absolute left-4 text-gray-600">
                                 <i class="fa-solid fa-lock"></i>
                             </span>
                             <input type="password" id="password" name="password" required placeholder="Mínimo 6 caracteres"
-                                class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-400 text-base bg-gray-50/50 shadow-inner transition">
+                                class="w-full pl-11 pr-12 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-400 text-base bg-gray-50/50 shadow-inner transition">
+                            <!-- Botón mejorado para accesibilidad -->
+                            <button type="button" onclick="togglePassword('password', 'eye-password')"
+                                class="absolute right-0 w-12 h-12 flex items-center justify-center text-gray-500 hover:text-gray-700 focus:outline-none rounded-r-xl"
+                                aria-label="Mostrar u ocultar contraseña">
+                                <i id="eye-password" class="fa-solid fa-eye"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -56,17 +62,24 @@
                         <label for="password_confirmation"
                             class="block text-sm font-semibold text-gray-700 mb-1.5">Confirmar contraseña</label>
                         <div class="relative flex items-center">
-                            <span class="absolute left-4 text-gray-400">
+                            <span class="absolute left-4 text-gray-600">
                                 <i class="fa-solid fa-lock"></i>
                             </span>
                             <input type="password" id="password_confirmation" name="password_confirmation" required
                                 placeholder="Confirma tu nueva contraseña"
-                                class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-400 text-base bg-gray-50/50 shadow-inner transition">
+                                class="w-full pl-11 pr-12 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-800 placeholder-gray-400 text-base bg-gray-50/50 shadow-inner transition">
+                            <!-- Botón mejorado para accesibilidad -->
+                            <button type="button"
+                                onclick="togglePassword('password_confirmation', 'eye-password_confirmation')"
+                                class="absolute right-0 w-12 h-12 flex items-center justify-center text-gray-500 hover:text-gray-700 focus:outline-none rounded-r-xl"
+                                aria-label="Mostrar u ocultar contraseña">
+                                <i id="eye-password_confirmation" class="fa-solid fa-eye"></i>
+                            </button>
                         </div>
                     </div>
 
                     <button type="submit"
-                        class="w-full py-3.5 px-6 rounded-xl bg-[#FF6B00] hover:bg-orange-600 text-white font-semibold text-base shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2">
+                        class="w-full py-3.5 px-6 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-semibold text-base shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2">
                         <i class="fa-solid fa-check"></i>
                         <span>Actualizar contraseña</span>
                     </button>
@@ -80,4 +93,23 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            function togglePassword(inputId, iconId) {
+                const input = document.getElementById(inputId);
+                const icon = document.getElementById(iconId);
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+        </script>
+    @endpush
 @endsection

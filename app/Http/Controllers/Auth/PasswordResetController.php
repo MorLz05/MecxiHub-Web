@@ -132,6 +132,9 @@ class PasswordResetController extends Controller
     {
         $request->validate([
             'email' => 'required|email'
+        ], [
+            'email.required' => 'Debes ingresar tu correo electrónico.',
+            'email.email'    => 'Ingresa un correo electrónico válido.',
         ]);
 
         $email = trim($request->input('email'));
@@ -243,6 +246,13 @@ class PasswordResetController extends Controller
             'token' => 'required',
             'email' => 'required|email',
             'password' => 'required|min:6|confirmed'
+        ], [
+            'password.required'  => 'Debes ingresar una nueva contraseña.',
+            'password.min'       => 'La contraseña debe tener al menos 6 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden. Verifica e intenta de nuevo.',
+            'email.required'     => 'El correo electrónico es obligatorio.',
+            'email.email'        => 'Ingresa un correo electrónico válido.',
+            'token.required'     => 'El enlace de restablecimiento es inválido.',
         ]);
 
         $token = $request->input('token');

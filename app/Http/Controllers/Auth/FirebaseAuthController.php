@@ -266,6 +266,8 @@ class FirebaseAuthController extends Controller
 
                 Log::info('✅ Sesión iniciada para: ' . $nombreCompletoFinal);
 
+                session()->forget(['taller_data', 'taller_id', 'taller_data_raw']);
+
                 // ✅ Redirigir respetando prioridad: calificación > rol
                 return $this->redirigirSegunContexto(
                     $uid,
@@ -390,10 +392,13 @@ class FirebaseAuthController extends Controller
                             'nombre_completo' => $userData['nombre_completo'],
                             'rol' => $userData['rol'],
                             'usuario' => $userData['usuario'] ?? null,
+                            'taller_id' => $userData['taller_id'] ?? null,
                         ]
                     ]);
 
                     Log::info('Sesión iniciada para: ' . $userData['nombre_completo']);
+
+                    session()->forget(['taller_data', 'taller_id', 'taller_data_raw']);
 
                     // ✅ Redirigir respetando prioridad: calificación > rol
                     return $this->redirigirSegunContexto(
@@ -411,8 +416,11 @@ class FirebaseAuthController extends Controller
                             'email' => $validated['email'],
                             'nombre_completo' => $userDisplayName,
                             'rol' => 'Conductor',
+                            'taller_id' => $userData['taller_id'] ?? null,
                         ]
                     ]);
+
+                    session()->forget(['taller_data', 'taller_id', 'taller_data_raw']);
 
                     // ✅ Redirigir respetando prioridad: calificación > rol
                     return $this->redirigirSegunContexto(
@@ -430,8 +438,11 @@ class FirebaseAuthController extends Controller
                         'email' => $validated['email'],
                         'nombre_completo' => $userDisplayName,
                         'rol' => 'Conductor',
+                        'usuario' => $userData['usuario'] ?? null,
+                        'taller_id' => $userData['taller_id'] ?? null,
                     ]
                 ]);
+                session()->forget(['taller_data', 'taller_id', 'taller_data_raw']);
 
                 // ✅ Redirigir respetando prioridad: calificación > rol
                 return $this->redirigirSegunContexto(
@@ -489,7 +500,9 @@ class FirebaseAuthController extends Controller
     {
         $email = session('firebase_user.email', 'unknown');
         Log::info('Cerrando sesión: ' . $email);
-        session()->forget('firebase_user');
+
+        session()->forget(['firebase_user', 'taller_id', 'taller_data']);
+
         return redirect()->route('login')->with('success', 'Sesión cerrada exitosamente.');
     }
 
@@ -840,6 +853,7 @@ class FirebaseAuthController extends Controller
                     'rol'             => $userDataFresh['rol'] ?? $rolFinal,
                     'usuario'         => $userDataFresh['usuario'] ?? null,
                     'auth_provider'   => 'google',
+                    'taller_id'       => $userDataFresh['taller_id'] ?? null,
                 ],
             ]);
 
