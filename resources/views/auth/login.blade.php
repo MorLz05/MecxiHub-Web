@@ -177,24 +177,8 @@
                             </div>
                             <div>
                                 <p class="font-semibold text-white">Asistencia IA 24/7</p>
-                                <p class="text-blue-200/80 text-sm">Resuelve tus dudas al instante con MexciBot</p>
+                                <p class="text-blue-200/80 text-sm">Inicia sesión para resolver tus dudas con MecxiBot</p>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- CTA - Hablar con IA -->
-                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 mt-4">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
-                                <p class="text-sm text-blue-100/90">¿Necesitas ayuda?</p>
-                                <p class="font-semibold text-white text-sm">Pregunta a nuestro asistente IA y obtén
-                                    respuestas al instante.</p>
-                            </div>
-                            <a href="{{ route('asistente.ia') }}"
-                                class="bg-orange-700 hover:bg-orange-800 text-white opacity-100 px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 shadow-lg whitespace-nowrap">
-                                <i class="fa-solid fa-comment-dots text-white"></i>
-                                <span class="text-white">Hablar con IA</span>
-                            </a>
                         </div>
                     </div>
 

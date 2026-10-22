@@ -21,6 +21,16 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## MecxiBot (Firebase AI Logic)
+
+The web assistant uses Firebase AI Logic from the Firebase project that hosts the web app. Configure these values in your local `.env` from that Firebase web app's configuration: `FIREBASE_AI_WEB_API_KEY`, `FIREBASE_AI_WEB_AUTH_DOMAIN`, `FIREBASE_AI_WEB_PROJECT_ID`, `FIREBASE_AI_WEB_STORAGE_BUCKET`, `FIREBASE_AI_WEB_MESSAGING_SENDER_ID`, and `FIREBASE_AI_WEB_APP_ID`.
+
+For local development, keep `APP_ENV=local` and `FIREBASE_AI_APPCHECK_DEBUG=true`. Open the assistant in the browser, copy the App Check debug token printed in the developer console, and register it for the matching web app in Firebase Console. The token is browser-specific and must remain private; do not commit it. Local debug mode does not require adding `localhost` as a reCAPTCHA domain.
+
+The chat uses `gemini-3.8-flash` and automatically switches to `gemini-3.5-flash-lite` if Firebase reports temporary high demand. If troubleshooting is needed, the browser console logs the failed stage (App Check, authorized context, or Gemini) without printing the user's chat context.
+
+For a deployed environment, set `FIREBASE_AI_APPCHECK_DEBUG=false` and configure `FIREBASE_AI_APPCHECK_SITE_KEY` with the reCAPTCHA Enterprise site key used by App Check. Build the frontend with `npm run build`. Drivers can open `/asistente-ia`; workshop staff can open the assistant from their dashboard.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.

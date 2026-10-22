@@ -9,6 +9,8 @@ use App\Http\Controllers\GestorMaestro\Dashboard\UsuarioController as GestorUsua
 use App\Http\Controllers\GestorMaestro\Dashboard\PlanController as GestorPlanController;
 use App\Http\Controllers\Taller\Dashboard\CuentaController as TallerCuentaController;
 use App\Http\Controllers\Taller\CalificacionController;
+use App\Http\Controllers\AiAssistantController;
+use App\Http\Controllers\AiAssistantIntentController;
 
 // ===== VISTAS PÚBLICAS =====
 Route::get('/', [App\Http\Controllers\Conductor\Dashboard\HomeController::class, 'index'])->name('home');
@@ -36,8 +38,27 @@ Route::get('/mis-servicios', function () {
 })->name('mis.servicios');
 
 Route::get('/asistente-ia', function () {
+    $user = session('firebase_user');
+    if (!$user) {
+        session(['ai_pending_assistant' => true]);
+        return redirect()->route('login');
+    }
+
+    if (($user['rol'] ?? null) === 'Administrador') {
+        return redirect()->route('taller.asistente');
+    }
+
     return view('conductor.asistente');
 })->name('asistente.ia');
+Route::post('/asistente-ia/intent', [AiAssistantIntentController::class, 'store'])
+    ->name('asistente.intent')
+    ->middleware('throttle:10,1');
+
+Route::middleware(['auth.firebase', 'no-cache'])->group(function () {
+    Route::post('/asistente-ia/contexto', [AiAssistantController::class, 'context'])
+        ->name('asistente.context')
+        ->middleware('throttle:30,1');
+});
 
 // ===== CALIFICACIÓN (PÚBLICA) =====
 Route::get('/calificacion/{token}', [CalificacionController::class, 'showForm'])->name('calificacion.form');
@@ -245,8 +266,11 @@ Route::middleware(['taller', 'no-cache'])->prefix('taller')->name('taller.')->gr
 
     // Asistente IA
     Route::get('/asistente', function () {
-        return view('taller.asistente');
+        return view('Taller.asistente');
     })->name('asistente');
+    Route::post('/asistente/orden', [AiAssistantController::class, 'confirmOrderAction'])
+        ->name('asistente.order-action')
+        ->middleware('throttle:10,1');
 
     // Comentarios / Reseñas
     Route::get('/comentarios', [App\Http\Controllers\Taller\ComentarioController::class, 'index'])->name('comentarios');
