@@ -112,36 +112,32 @@
             </div>
 
             <!-- Category Pills -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-                <button type="button"
-                    class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-medium hover:border-[#0039A6] hover:text-[#0039A6] transition bg-white shadow-sm">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6" id="vehicle-problem-categories">
+                <button type="button" data-problem-category="motor" data-category-label="el motor"
+                    class="problem-category is-selected flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#FF6B00] bg-[#FF6B00] text-white font-semibold shadow-lg shadow-orange-500/30 transition">
                     <i class="fa-solid fa-engine text-lg"></i> Motor
                 </button>
-                <button type="button"
-                    class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#FF6B00] text-white font-semibold shadow-lg shadow-orange-500/30">
+                <button type="button" data-problem-category="frenos" data-category-label="los frenos"
+                    class="problem-category flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium shadow-sm transition hover:border-[#FF6B00] hover:bg-[#FF6B00] hover:text-white hover:shadow-lg hover:shadow-orange-500/30">
                     <i class="fa-solid fa-compact-disc text-lg"></i> Frenos
                 </button>
-                <button type="button"
-                    class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-medium hover:border-[#0039A6] hover:text-[#0039A6] transition bg-white shadow-sm">
+                <button type="button" data-problem-category="eléctrico" data-category-label="el sistema eléctrico"
+                    class="problem-category flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium shadow-sm transition hover:border-[#FF6B00] hover:bg-[#FF6B00] hover:text-white hover:shadow-lg hover:shadow-orange-500/30">
                     <i class="fa-solid fa-car-battery text-lg"></i> Sistema eléctrico
                 </button>
-                <button type="button"
-                    class="flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-medium hover:border-[#0039A6] hover:text-[#0039A6] transition bg-white shadow-sm">
+                <button type="button" data-problem-category="suspensión" data-category-label="la suspensión"
+                    class="problem-category flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium shadow-sm transition hover:border-[#FF6B00] hover:bg-[#FF6B00] hover:text-white hover:shadow-lg hover:shadow-orange-500/30">
                     <i class="fa-solid fa-dharmachakra text-lg"></i> Suspensión
                 </button>
             </div>
 
             <!-- Input Bar -->
-            <form action="#" method="POST" class="space-y-5">
+            <form action="{{ route('asistente.intent') }}" method="POST" class="space-y-5">
                 @csrf
                 <div class="relative flex items-center">
-                    <input type="text" name="prompt"
+                    <input type="text" name="message" required maxlength="2000"
                         placeholder="Ej. Mi auto vibra al frenar, hace ruido o el pedal se va al fondo..."
                         class="w-full pl-5 pr-14 py-4 rounded-2xl border border-gray-200 focus:outline-none focus:border-[#0039A6] text-gray-700 placeholder-gray-400 text-sm bg-gray-50/50 shadow-inner">
-                    <button type="button"
-                        class="absolute right-3 p-2.5 text-[#FF6B00] hover:bg-orange-50 rounded-xl transition">
-                        <i class="fa-solid fa-microphone text-xl"></i>
-                    </button>
                 </div>
 
                 <!-- Submit Button -->
@@ -153,6 +149,36 @@
             </form>
         </div>
     </div>
+    @push('styles')
+        <style>
+            #vehicle-problem-categories:hover [data-problem-category].is-selected:not(:hover) {
+                background-color: #fff !important;
+                border-color: #e5e7eb !important;
+                color: #374151 !important;
+                box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+            }
+        </style>
+    @endpush
+    @push('scripts')
+        <script>
+            document.querySelectorAll('[data-problem-category]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const form = button.closest('.max-w-6xl')?.querySelector('form[action="{{ route('asistente.intent') }}"]');
+                    const message = form?.querySelector('[name="message"]');
+                    if (!form || !message) return;
+
+                    document.querySelectorAll('[data-problem-category]').forEach((category) => {
+                        category.classList.remove('is-selected', 'border-[#FF6B00]', 'bg-[#FF6B00]', 'text-white', 'font-semibold', 'shadow-lg', 'shadow-orange-500/30');
+                        category.classList.add('border-gray-200', 'bg-white', 'text-gray-700', 'font-medium', 'shadow-sm');
+                    });
+                    button.classList.add('is-selected', 'border-[#FF6B00]', 'bg-[#FF6B00]', 'text-white', 'font-semibold', 'shadow-lg', 'shadow-orange-500/30');
+                    button.classList.remove('border-gray-200', 'bg-white', 'text-gray-700', 'font-medium', 'shadow-sm');
+                    message.value = `Tengo un problema con ${button.dataset.categoryLabel}. ¿Qué información necesitas para ayudarme a identificarlo?`;
+                    form.requestSubmit();
+                });
+            });
+        </script>
+    @endpush
 
         <!-- TALLERES RECOMENDADOS SECTION -->
     <section class="max-w-6xl mx-auto px-4 py-14">

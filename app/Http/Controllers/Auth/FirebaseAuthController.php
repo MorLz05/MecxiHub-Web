@@ -733,6 +733,11 @@ class FirebaseAuthController extends Controller
                 ->with('success', '¡Bienvenido ' . $nombreCompleto . '! Ahora puedes calificar tu experiencia.');
         }
 
+        $assistantRequested = session()->pull('ai_pending_assistant', false);
+        if (session()->has('ai_pending_message') || $assistantRequested) {
+            return redirect()->route($rol === 'Administrador' ? 'taller.asistente' : 'asistente.ia');
+        }
+
         // 2. Redirección normal según rol
         if ($rol === 'Administrador') {
             return redirect()
@@ -947,6 +952,11 @@ class FirebaseAuthController extends Controller
             $token = session()->pull('calificacion_pendiente_token');
             session()->forget('calificacion_pendiente_taller_id');
             return route('calificacion.form', ['token' => $token]);
+        }
+
+        $assistantRequested = session()->pull('ai_pending_assistant', false);
+        if (session()->has('ai_pending_message') || $assistantRequested) {
+            return route($rol === 'Administrador' ? 'taller.asistente' : 'asistente.ia');
         }
 
         if ($rol === 'Administrador') {

@@ -82,7 +82,7 @@
 
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col min-w-0 overflow-y-auto bg-slate-50">
-            <main class="p-6 md:p-8 flex-1">
+            <main class="p-6 md:p-8 flex-1 min-h-0 @yield('layout-main-class')">
                 @yield('content')
             </main>
         </div>

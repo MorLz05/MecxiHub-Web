@@ -1,0 +1,112 @@
+.mecxibot-typing {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 20px;
+    padding: 2px 0;
+}
+
+.mecxibot-markdown {
+    overflow-wrap: anywhere;
+}
+
+.mecxibot-markdown > * + * {
+    margin-top: 0.65rem;
+}
+
+.mecxibot-markdown p {
+    margin: 0;
+}
+
+.mecxibot-markdown ul,
+.mecxibot-markdown ol {
+    padding-left: 1.4rem;
+}
+
+.mecxibot-markdown ul {
+    list-style: disc;
+}
+
+.mecxibot-markdown ol {
+    list-style: decimal;
+}
+
+.mecxibot-markdown li + li {
+    margin-top: 0.3rem;
+}
+
+.mecxibot-markdown strong {
+    font-weight: 700;
+}
+
+.mecxibot-markdown-heading {
+    display: block;
+    font-size: 1rem;
+}
+
+.mecxibot-markdown em {
+    font-style: italic;
+}
+
+.mecxibot-markdown code {
+    border-radius: 0.25rem;
+    background: rgb(0 0 0 / 0.06);
+    padding: 0.1rem 0.25rem;
+    font-family: ui-monospace, monospace;
+    font-size: 0.9em;
+}
+
+.mecxibot-markdown-link {
+    color: #0039a6;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.mecxibot-action-summary {
+    max-height: min(45vh, 22rem);
+    overflow-y: auto;
+}
+
+.mecxibot-action-summary-row {
+    overflow-wrap: anywhere;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.mecxibot-action-summary-row + .mecxibot-action-summary-row {
+    margin-top: 0.35rem;
+}
+
+.mecxibot-typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: mecxibot-typing-bounce 1.2s infinite ease-in-out;
+}
+
+.mecxibot-typing-dot:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.mecxibot-typing-dot:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes mecxibot-typing-bounce {
+    0%, 60%, 100% {
+        opacity: 0.4;
+        transform: translateY(0);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(-4px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mecxibot-typing-dot {
+        animation: none;
+    }
+}
