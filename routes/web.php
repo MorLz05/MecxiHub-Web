@@ -58,6 +58,9 @@ Route::middleware(['auth.firebase', 'no-cache'])->group(function () {
     Route::post('/asistente-ia/contexto', [AiAssistantController::class, 'context'])
         ->name('asistente.context')
         ->middleware('throttle:30,1');
+    Route::post('/asistente-ia/log', [AiAssistantController::class, 'clientLog'])
+        ->name('asistente.log')
+        ->middleware('throttle:20,1');
 });
 
 // ===== CALIFICACIÓN (PÚBLICA) =====

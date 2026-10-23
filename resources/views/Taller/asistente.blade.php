@@ -37,6 +37,8 @@
         <section id="mecxibot-chat"
             class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl"
             data-role="taller"
+            data-log-url="{{ route('asistente.log') }}"
+            data-chat-session="{{ \App\Http\Controllers\AiAssistantController::chatSessionToken() }}"
             data-authenticated="true"
             data-context-url="{{ route('asistente.context') }}"
             data-intent-url="{{ route('asistente.intent') }}"
@@ -68,8 +70,8 @@
                     <button id="chat-mic" type="button" aria-label="Dictar mensaje" class="rounded-xl p-3 text-slate-500 hover:bg-blue-50 hover:text-blue-700">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
-                    <textarea id="chat-input" rows="1" maxlength="2000" placeholder="Escribe tu consulta..."
-                        class="max-h-36 min-h-12 flex-1 resize-y rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"></textarea>
+                    <textarea id="chat-input" rows="2" maxlength="2000" placeholder="Escribe tu consulta..."
+                        class="mecxibot-chat-input min-h-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"></textarea>
                     <button id="chat-send" type="submit" aria-label="Enviar mensaje" class="rounded-2xl bg-blue-700 p-4 text-white shadow-lg hover:bg-blue-800">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>

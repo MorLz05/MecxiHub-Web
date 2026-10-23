@@ -41,6 +41,8 @@
         <section id="mecxibot-chat"
             class="relative z-10 flex min-h-[620px] flex-col rounded-3xl border border-gray-100 bg-white p-4 shadow-2xl sm:p-7 lg:col-span-2"
             data-role="conductor"
+            data-log-url="{{ route('asistente.log') }}"
+            data-chat-session="{{ session()->has('firebase_user') ? \App\Http\Controllers\AiAssistantController::chatSessionToken() : '' }}"
             data-authenticated="{{ session()->has('firebase_user') ? 'true' : 'false' }}"
             data-context-url="{{ route('asistente.context') }}"
             data-intent-url="{{ route('asistente.intent') }}"
@@ -73,8 +75,8 @@
                     <button id="chat-mic" type="button" aria-label="Dictar mensaje" class="rounded-xl p-3 text-gray-500 hover:bg-blue-50 hover:text-[#0039A6]">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
-                    <textarea id="chat-input" rows="1" maxlength="2000" placeholder="Escribe tu mensaje aquí..."
-                        class="max-h-32 min-h-12 flex-1 resize-y rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 outline-none focus:border-[#0039A6] focus:ring-2 focus:ring-blue-100"></textarea>
+                    <textarea id="chat-input" rows="2" maxlength="2000" placeholder="Escribe tu mensaje aquí..."
+                        class="mecxibot-chat-input min-h-0 flex-1 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 outline-none focus:border-[#0039A6] focus:ring-2 focus:ring-blue-100"></textarea>
                     <button id="chat-send" type="submit" aria-label="Enviar mensaje" class="rounded-2xl bg-[#FF6B00] p-4 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>

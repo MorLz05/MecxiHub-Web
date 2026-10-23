@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AiScopeGuard;
 use Google\Cloud\Firestore\FirestoreClient;
+use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -25,6 +27,15 @@ class AiAssistantController extends Controller
         ]);
         $message = $validated['message'] ?? '';
 
+        if (in_array($user['rol'] ?? '', ['Conductor', 'Administrador'], true) && AiScopeGuard::isOutOfScope($message)) {
+            Log::info('MecxiBot bloqueó una consulta fuera de ámbito.', ['uid' => $user['uid'], 'rol' => $user['rol']]);
+
+            return response()->json([
+                'blocked' => true,
+                'reply' => AiScopeGuard::replyFor($user['rol']),
+            ]);
+        }
+
         try {
             if (($user['rol'] ?? '') === 'Conductor') {
                 return response()->json(['context' => $this->conductorContext($user['uid'], $message)]);
@@ -45,6 +56,34 @@ class AiAssistantController extends Controller
                 'message' => 'No se pudo consultar la información autorizada. Intenta de nuevo.',
             ], 503);
         }
+    }
+
+    public function clientLog(Request $request): JsonResponse
+    {
+        $user = session('firebase_user');
+        $validated = $request->validate([
+            'category' => 'required|in:network,quota,model_fallback,auth,provider,unknown',
+            'stage' => 'required|in:initialization,context,gemini,action',
+            'code' => 'nullable|string|max:60|regex:/^[A-Za-z0-9._\/-]*$/',
+            'status' => 'nullable|integer|between:100,599',
+        ]);
+
+        Log::warning('Error de cliente en MecxiBot.', [
+            'uid' => $user['uid'] ?? null,
+            'rol' => $user['rol'] ?? null,
+            ...$validated,
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public static function chatSessionToken(): string
+    {
+        if (!session()->has('ai_chat_session')) {
+            session(['ai_chat_session' => Str::random(32)]);
+        }
+
+        return session('ai_chat_session');
     }
 
     public function confirmOrderAction(Request $request): JsonResponse
@@ -209,8 +248,22 @@ class AiAssistantController extends Controller
             $orders[] = $this->safeOrderSummary($document->data());
         }
 
+        $byStatus = [];
+        $estimatedTotal = 0.0;
+        foreach ($orders as $order) {
+            $status = (string) ($order['estado'] ?? 'Sin estado');
+            $byStatus[$status] = ($byStatus[$status] ?? 0) + 1;
+            $estimatedTotal += (float) ($order['presupuesto']['costo_estimado'] ?? 0);
+        }
+
         return json_encode([
             'tipo' => 'taller',
+            'estadisticas_ordenes' => [
+                'ordenes_consideradas' => count($orders),
+                'por_estado' => $byStatus,
+                'costo_estimado_total' => round($estimatedTotal, 2),
+                'nota' => 'Calculado con las órdenes más recientes disponibles (máximo 50).',
+            ],
             'ordenes_del_taller_autorizado' => array_slice($orders, 0, 50),
             'instruccion' => 'Este contexto contiene únicamente órdenes del taller del usuario autenticado. No incluye datos de contacto de clientes. No afirmes haber consultado información que no aparece aquí.',
             'consulta' => mb_substr($message, 0, 1000),
