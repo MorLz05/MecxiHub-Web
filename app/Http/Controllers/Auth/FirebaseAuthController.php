@@ -501,7 +501,7 @@ class FirebaseAuthController extends Controller
         $email = session('firebase_user.email', 'unknown');
         Log::info('Cerrando sesión: ' . $email);
 
-        session()->forget(['firebase_user', 'taller_id', 'taller_data']);
+        session()->forget(['firebase_user', 'taller_id', 'taller_data', 'ai_chat_session']);
 
         return redirect()->route('login')->with('success', 'Sesión cerrada exitosamente.');
     }
