@@ -52,7 +52,7 @@
     @include('conductor.layouts.partials.navbar')
 
     <!-- Contenido principal de la página -->
-    <main>
+    <main class="@yield('layout-main-class')">
         @yield('content')
     </main>
 

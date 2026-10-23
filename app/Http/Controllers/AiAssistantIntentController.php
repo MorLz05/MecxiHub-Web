@@ -19,6 +19,7 @@ class AiAssistantIntentController extends Controller
         }
 
         session(['url.intended' => route('asistente.ia')]);
+        session()->flash('ai_access_notice', 'Debes iniciar sesión para acceder a la IA.');
         return redirect()->route('login');
     }
 }
