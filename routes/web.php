@@ -41,6 +41,7 @@ Route::get('/asistente-ia', function () {
     $user = session('firebase_user');
     if (!$user) {
         session(['ai_pending_assistant' => true]);
+        session()->flash('ai_access_notice', 'Debes iniciar sesión para acceder a la IA.');
         return redirect()->route('login');
     }
 

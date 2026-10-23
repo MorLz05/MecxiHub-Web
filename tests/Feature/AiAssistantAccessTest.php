@@ -9,7 +9,20 @@ test('a guest is sent to login before opening the assistant', function () {
     $this->withoutVite()
         ->get(route('asistente.ia'))
         ->assertRedirect(route('login'))
-        ->assertSessionHas('ai_pending_assistant', true);
+        ->assertSessionHas('ai_pending_assistant', true)
+        ->assertSessionHas('ai_access_notice', 'Debes iniciar sesión para acceder a la IA.');
+});
+
+test('a guest sees a temporary notice when submitting a question to the assistant', function () {
+    $this->withoutVite()
+        ->post(route('asistente.intent'), ['message' => '¿Por qué hace ruido mi auto?'])
+        ->assertRedirect(route('login'))
+        ->assertSessionHas('ai_pending_message', '¿Por qué hace ruido mi auto?')
+        ->assertSessionHas('ai_access_notice', 'Debes iniciar sesión para acceder a la IA.');
+
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertSee('Debes iniciar sesión para acceder a la IA.');
 });
 
 test('a guest opening the workshop assistant stores intent for post-login routing', function () {

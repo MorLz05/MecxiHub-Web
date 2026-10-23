@@ -458,7 +458,7 @@
                     class="text-gray-400 hover:text-gray-600 text-2xl font-light">&times;</button>
             </div>
             <div class="p-6 text-gray-700 text-base leading-relaxed">
-                <p class="mb-4"><strong>Última actualización:</strong> 5 de agosto de 2026</p>
+                <p class="mb-4"><strong>Última actualización:</strong> 23 de octubre de 2026</p>
                 <h4 class="font-bold text-lg mt-6 mb-2">1. Aceptación de los Términos</h4>
                 <p>Al utilizar MecxiHub, aceptas cumplir con estos Términos del Servicio. Si no estás de acuerdo, no
                     utilices nuestra plataforma.</p>
@@ -479,6 +479,28 @@
                 <h4 class="font-bold text-lg mt-6 mb-2">7. Modificaciones</h4>
                 <p>Nos reservamos el derecho de actualizar estos términos en cualquier momento. Te notificaremos de cambios
                     significativos.</p>
+                <h4 class="font-bold text-lg mt-6 mb-2">8. Asistente de inteligencia artificial (MecxiBot)</h4>
+                <p>MecxiBot utiliza inteligencia artificial para ofrecer orientación general sobre mecánica automotriz y,
+                    según el tipo de cuenta, ayudar con información y propuestas relacionadas con las órdenes del taller.
+                    Para responder, puede usar el mensaje que escribas, los archivos que adjuntes y el contexto autorizado
+                    de tu cuenta. Las solicitudes se procesan mediante Firebase AI Logic y modelos Gemini de Google.</p>
+                <p class="mt-3">En cuentas de Conductor, las respuestas pueden personalizarse con los vehículos, servicios
+                    y órdenes vinculados a esa cuenta, además de información pública de talleres. En cuentas de Taller,
+                    MecxiBot puede consultar información disponible de las órdenes del taller asociado a la cuenta y
+                    preparar propuestas de creación o edición. Las propuestas de órdenes requieren revisión y confirmación
+                    expresa del usuario; MecxiBot no debe considerarlas guardadas hasta que la aplicación confirme la
+                    operación.</p>
+                <h4 class="font-bold text-lg mt-6 mb-2">9. Alcance y uso responsable de MecxiBot</h4>
+                <p>MecxiBot está limitado a consultas de mecánica automotriz y, para usuarios de Taller, a la gestión de
+                    órdenes e información disponible del propio taller. No es un servicio de diagnóstico definitivo ni
+                    sustituye la inspección, el criterio o la atención de un profesional. Sus respuestas pueden ser
+                    incompletas o inexactas; verifica la información antes de tomar decisiones de mantenimiento,
+                    reparación, seguridad o gestión.</p>
+                <p class="mt-3">No utilices el asistente para emergencias, para solicitar asesoría ajena a su propósito,
+                    para introducir instrucciones que intenten alterar sus límites ni para enviar código, scripts o
+                    solicitudes sobre sistemas informáticos. No escribas contraseñas, datos de tarjetas, credenciales ni
+                    información sensible propia o de terceros en los mensajes o archivos adjuntos. Cuando exista un riesgo
+                    para la seguridad del vehículo o de las personas, solicita la revisión de un profesional.</p>
             </div>
         </div>
     </div>
@@ -493,7 +515,7 @@
                     class="text-gray-400 hover:text-gray-600 text-2xl font-light">&times;</button>
             </div>
             <div class="p-6 text-gray-700 text-base leading-relaxed">
-                <p class="mb-4"><strong>Última actualización:</strong> 5 de agosto de 2026</p>
+                <p class="mb-4"><strong>Última actualización:</strong> 23 de octubre de 2026</p>
                 <h4 class="font-bold text-lg mt-6 mb-2">1. Información que Recopilamos</h4>
                 <p>Recopilamos información personal como nombre, correo electrónico, información de vehículo y datos de uso
                     para mejorar tu experiencia.</p>
@@ -507,9 +529,27 @@
                 <h4 class="font-bold text-lg mt-6 mb-2">5. Terceros</h4>
                 <p>No compartimos tu información personal con terceros sin tu consentimiento, excepto cuando sea necesario
                     para el servicio.</p>
-                <h4 class="font-bold text-lg mt-6 mb-2">6. Tus Derechos</h4>
+                <h4 class="font-bold text-lg mt-6 mb-2">6. Uso de datos en MecxiBot</h4>
+                <p>Cuando utilizas MecxiBot, el texto de tus consultas y los archivos que decidas adjuntar se envían a
+                    Firebase AI Logic para generar una respuesta mediante modelos Gemini de Google. La aplicación también
+                    proporciona el contexto necesario según tu rol: al Conductor, información vinculada a sus propios
+                    vehículos, servicios y órdenes; al usuario de Taller, información autorizada de las órdenes de su
+                    taller. El contexto del taller excluye los datos de contacto de sus clientes. No se debe usar el
+                    asistente para consultar información de otras cuentas o talleres.</p>
+                <p class="mt-3">El historial visible del chat y los adjuntos se conservan temporalmente en el navegador
+                    durante la sesión de uso y no se guardan como historial de chat en la base de datos de MecxiHub. Al
+                    cerrar la pestaña o el navegador, o al cerrar sesión, ese historial deja de restaurarse en el chat.
+                    Esta eliminación local no revierte el procesamiento que Firebase AI Logic o Google hayan realizado
+                    para generar la respuesta; dicho procesamiento se rige también por las políticas y condiciones de
+                    esos proveedores.</p>
+                <p class="mt-3">Para diagnosticar fallos del asistente, MecxiHub puede registrar metadatos técnicos
+                    limitados, como el identificador de cuenta, el rol, la etapa y categoría del error, un código técnico
+                    y el estado HTTP. Este registro no incluye el texto de la conversación ni los archivos adjuntos.</p>
+                <p class="mt-3">Evita incluir en las consultas o adjuntos contraseñas, datos de pago, credenciales,
+                    documentos de identidad o información sensible de otras personas.</p>
+                <h4 class="font-bold text-lg mt-6 mb-2">7. Tus Derechos</h4>
                 <p>Tienes derecho a acceder, modificar o eliminar tus datos personales en cualquier momento.</p>
-                <h4 class="font-bold text-lg mt-6 mb-2">7. Contacto</h4>
+                <h4 class="font-bold text-lg mt-6 mb-2">8. Contacto</h4>
                 <p>Para preguntas sobre privacidad, contáctanos en <a href="mailto:privacidad@mecxihub.com"
                         class="text-[#0039A6] font-semibold">privacidad@mecxihub.com</a>.</p>
             </div>

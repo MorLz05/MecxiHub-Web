@@ -1,6 +1,7 @@
 @extends('conductor.layouts.app')
 
 @section('title', 'Asistente IA - MecxiHub')
+@section('layout-main-class', 'h-[calc(100dvh-6rem)] overflow-hidden')
 
 @php
     $firebaseAiConfig = [
@@ -23,23 +24,23 @@
 @endpush
 
 @section('content')
-    <section class="relative overflow-hidden bg-[#002677] px-4 pb-24 pt-12 text-white sm:px-8">
+    <section class="relative h-28 shrink-0 overflow-hidden bg-[#002677] px-4 py-4 text-white sm:px-8">
         <div class="mx-auto max-w-7xl">
-            <div class="flex items-center gap-5">
-                <img src="{{ asset('images/logo/logo2.png') }}" alt="MecxiHub" class="h-16 w-auto">
+            <div class="flex h-full items-center gap-5">
+                <img src="{{ asset('images/logo/logo2.png') }}" alt="MecxiHub" class="h-12 w-auto">
                 <div>
-                    <p class="text-sm font-semibold text-blue-100">Asistente para conductores</p>
-                    <h1 class="text-3xl font-black sm:text-5xl">Mecxi<span class="text-[#FF6B00]">Bot</span></h1>
-                    <p class="mt-2 max-w-xl text-blue-100">Cuéntame qué le pasa a tu vehículo y te oriento con un tono claro y cercano.</p>
+                    <p class="text-xs font-semibold text-blue-100">Asistente para conductores</p>
+                    <h1 class="text-2xl font-black sm:text-3xl">Mecxi<span class="text-[#FF6B00]">Bot</span></h1>
+                    <p class="hidden max-w-xl text-sm text-blue-100 sm:block">Cuéntame qué le pasa a tu vehículo y te oriento con un tono claro y cercano.</p>
                 </div>
             </div>
         </div>
         <div class="absolute -right-12 -top-20 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl"></div>
     </section>
 
-    <main class="mx-auto -mt-12 grid max-w-7xl grid-cols-1 gap-6 px-4 pb-10 lg:grid-cols-3">
+    <div class="mx-auto flex h-[calc(100%-7rem)] min-h-0 w-full max-w-7xl flex-col gap-4 px-4 py-4 lg:flex-row">
         <section id="mecxibot-chat"
-            class="relative z-10 flex min-h-[620px] flex-col rounded-3xl border border-gray-100 bg-white p-4 shadow-2xl sm:p-7 lg:col-span-2"
+            class="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white p-4 shadow-2xl sm:p-6"
             data-role="conductor"
             data-log-url="{{ route('asistente.log') }}"
             data-chat-session="{{ session()->has('firebase_user') ? \App\Http\Controllers\AiAssistantController::chatSessionToken() : '' }}"
@@ -49,23 +50,23 @@
             data-action-url="{{ route('taller.asistente.order-action') }}"
             data-login-url="{{ route('login') }}"
             data-initial-message="{{ session()->pull('ai_pending_message', '') }}">
-            <div class="mb-4 flex items-start justify-between gap-3">
+            <div class="mb-2 flex shrink-0 items-start justify-between gap-3">
                 <div>
                     <h2 class="text-xl font-bold text-gray-900">Chat con MecxiBot</h2>
                     <p class="mt-1 text-sm text-gray-500">Orientación basada únicamente en los vehículos y servicios de tu cuenta.</p>
                 </div>
                 <span class="whitespace-nowrap rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">● En línea</span>
             </div>
-            <div id="chat-error" role="alert" class="hidden mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
-            <div id="chat-messages" aria-live="polite" class="flex-1 space-y-4 overflow-y-auto rounded-2xl bg-white px-1 py-3">
+            <div id="chat-error" role="alert" class="hidden mb-2 shrink-0 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"></div>
+            <div id="chat-messages" aria-live="polite" class="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain rounded-2xl bg-white px-1 py-3">
                 <article class="mr-auto max-w-[92%] rounded-2xl rounded-tl-sm border border-gray-200 bg-gray-100 px-5 py-4 text-gray-800">
                     <strong class="mb-2 block text-xs text-[#FF6B00]">🤖 MecxiBot</strong>
                     <p class="text-sm leading-relaxed">¡Hola! Cuéntame qué ruido, falla o duda tienes. Si tienes varios vehículos en tu cuenta, dime cuál quieres consultar.</p>
                 </article>
             </div>
-            <div id="chat-attachments" class="hidden flex-wrap gap-2 border-t border-gray-100 py-2"></div>
-            <div id="chat-pending-action" class="hidden rounded-xl border border-amber-300 bg-amber-50 p-4"></div>
-            <form id="chat-form" class="mt-3 border-t border-gray-100 pt-4">
+            <div id="chat-attachments" class="hidden shrink-0 flex-wrap gap-2 border-t border-gray-100 py-2"></div>
+            <div id="chat-pending-action" class="hidden shrink-0 rounded-xl border border-amber-300 bg-amber-50 p-4"></div>
+            <form id="chat-form" class="mt-2 shrink-0 border-t border-gray-100 pt-3">
                 <input id="chat-files" type="file" accept="image/*,application/pdf" capture="environment" multiple class="hidden">
                 <label class="sr-only" for="chat-input">Escribe tu mensaje</label>
                 <div class="flex items-end gap-2">
@@ -85,7 +86,7 @@
             </form>
         </section>
 
-        <aside class="relative z-10 space-y-5">
+        <aside class="relative z-10 hidden w-80 shrink-0 space-y-4 overflow-y-auto lg:block">
             <section class="rounded-2xl border border-blue-200 bg-white p-5 shadow-sm">
                 <h2 class="mb-4 flex items-center gap-2 font-bold text-gray-900"><i class="fa-solid fa-lightbulb text-[#FF6B00]"></i> Preguntas frecuentes</h2>
                 <div class="space-y-2">
@@ -108,5 +109,5 @@
                 <p>Para personalizar una respuesta, el asistente consulta solo tus vehículos y servicios vinculados a tu cuenta. No consulta órdenes de otros clientes ni talleres.</p>
             </section>
         </aside>
-    </main>
+    </div>
 @endsection

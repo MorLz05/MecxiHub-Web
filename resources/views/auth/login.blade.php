@@ -3,6 +3,26 @@
 @section('title', 'Iniciar Sesión - MecxiHub')
 
 @section('content')
+    @if (session('ai_access_notice'))
+        <div id="ai-access-notice"
+            role="status"
+            aria-live="polite"
+            class="fixed left-1/2 top-4 z-[100] -translate-x-1/2 rounded-xl border border-blue-200 bg-white px-4 py-3 text-center text-sm font-medium text-blue-900 shadow-lg transition-all duration-300">
+            {{ session('ai_access_notice') }}
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const notice = document.getElementById('ai-access-notice');
+                if (!notice) return;
+
+                window.setTimeout(() => {
+                    notice.classList.add('pointer-events-none', 'opacity-0', '-translate-y-2');
+                    window.setTimeout(() => notice.remove(), 300);
+                }, 5000);
+            });
+        </script>
+    @endif
+
     <!-- CONTENEDOR PRINCIPAL (Fondo blanco) -->
     <div class="min-h-[calc(100vh-80px)] bg-white flex items-center justify-center px-4 py-12">
         <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-0 items-stretch">
