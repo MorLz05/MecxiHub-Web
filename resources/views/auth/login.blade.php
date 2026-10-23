@@ -28,6 +28,17 @@
                         </div>
                     @endif
 
+                    @if ($errors->any())
+                        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-start gap-3 shadow-sm">
+                            <i class="fa-solid fa-circle-exclamation text-xl mt-0.5"></i>
+                            <div>
+                                @foreach ($errors->all() as $error)
+                                    <p class="text-sm font-medium">{{ $error }}</p>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Formulario -->
                     <form action="{{ route('login') }}" method="POST" class="space-y-5">
                         @csrf
