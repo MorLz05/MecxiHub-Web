@@ -22,10 +22,14 @@ class AiScopeGuard
         '/\b(hackear|hackeo|hacker|exploit|xss|csrf|inyeccion|injection|drop table|union select|ciberseguridad|seguridad informatica)\b/u',
         '/<\s*\/?\s*(script|iframe|img|svg|object)\b|javascript:|\bselect\b.{1,60}\bfrom\b|\b(insert into|delete from)\b/u',
         '/\b(como (funciona|se administra|esta hecha|se programo|se desarrollo)|quien (programo|desarrollo|administra)).{0,40}\b(app|aplicacion|plataforma|pagina|sitio|sistema|web|mecxi ?hub|mecxi ?bot)\b/u',
-        // Tareas ajenas al taller.
-        '/\b(escribe|redacta|genera|inventa|dime)\b.{0,25}\b(poema|cancion|cuento|ensayo|chiste|receta|horoscopo)\b/u',
+        // Tareas generales ajenas al uso y mantenimiento de un vehículo.
+        '/\b(escribe|redacta|genera|inventa|dime|dame|prepara|comparte|proporciona|recomiendame|recomienda)\b.{0,50}\b(poema|cancion|letra|cuento|ensayo|chiste|receta|pastel|postre|comida|horoscopo|rutina de ejercicio|plan de entrenamiento)\b/u',
+        '/\b(crea|crear|construye|construir|fabrica|fabricar|disena|disenar|arma|armar|ensename a hacer|como hacer)\b.{0,45}\b(motor|maquina|generador|artefacto|robot|dispositivo)\b.{0,35}\b(gas|gasolina|diesel|electrico|hidrogeno|desde cero|casero|casera)?\b/u',
+        '/\b(lugares\b.{0,30}\bpara visitar|que visitar|itinerario|destinos turisticos|vacaciones|planifica un viaje|organiza un viaje|vuelos a|hoteles en)\b/u',
+        '/\b(resultado del partido|quien gano|marcador|proximo partido|equipo campeon|tabla de posiciones)\b/u',
+        '/\b(pronostico del tiempo|noticias de hoy|presidente de|capital de|resuelve (mi )?(tarea|examen|ecuacion|problema de matematicas)|(ayuda(me)?|ayudame) con (mi )?(tarea|examen|ejercicio de matematicas))\b/u',
+        '/\b(criptomonedas?|bitcoin|invertir en bolsa|acciones de|declaracion de impuestos|asesoria legal|diagnosticar (mi )?(enfermedad|sintomas)|medicamento para)\b/u',
         '/\b(traduce|traducir)\b.{0,40}\b(al|a) (ingles|frances|aleman|chino)\b/u',
-        '/\b(criptomonedas?|bitcoin|horoscopo|resultado del partido|quien gano)\b/u',
         '/\b(busca|buscar|investiga|consulta)\b.{0,25}\b(en internet|en google|en la web|online)\b/u',
     ];
 

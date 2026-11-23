@@ -23,6 +23,13 @@ export function isModelTimeoutError(message) {
     return /timeout has expired|timed?\s*out|deadline exceeded/i.test(message);
 }
 
+export function isRetryableProviderError(error) {
+    const message = messageOf(error);
+    const status = Number(message.match(/\[(\d{3})\b/)?.[1] || 0);
+
+    return [500, 502, 503, 504].includes(status);
+}
+
 export function classifyError(error, online = typeof navigator === 'undefined' ? true : navigator.onLine) {
     if (error instanceof UserFacingError) return 'validation';
     const message = messageOf(error);

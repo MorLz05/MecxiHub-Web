@@ -451,7 +451,7 @@ class AiAssistantController extends Controller
         }
         \Illuminate\Support\Facades\Cache::flush();
 
-        return "La orden $folio se creó y guardó correctamente. Entra a la sección Órdenes para completar cualquier dato que haya quedado pendiente y verifica que el registro aparezca con la información correcta.";
+        return "**¡La orden $folio se creó correctamente!**\n\n**Pendiente:** ve a la sección Órdenes y asigna un mecánico a este servicio. No se asignó uno automáticamente.";
     }
 
     private function updateOrder(string $workshopId, array $arguments): string

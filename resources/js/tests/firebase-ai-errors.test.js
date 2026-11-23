@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
     classifyError,
     CONNECTION_LOST_MESSAGE,
+    isRetryableProviderError,
     readableError,
     UserFacingError,
 } from '../firebase-ai-errors.js';
@@ -24,7 +25,9 @@ test('quota errors are classified separately and never leak urls or model names'
 test('provider errors other than quota are not quota (no model fallback)', () => {
     const overloaded = new Error('AI: Error fetching from https://x: [500 Internal Server Error] high demand (AI/fetch-error)');
     assert.equal(classifyError(overloaded, true), 'provider');
+    assert.equal(isRetryableProviderError(overloaded), true);
     assert.doesNotMatch(readableError(overloaded, true), /gemini|https?:|500/i);
+    assert.equal(isRetryableProviderError(new Error('AI: [404 Not Found] model unavailable')), false);
 });
 
 test('validation errors keep their corrective message', () => {
