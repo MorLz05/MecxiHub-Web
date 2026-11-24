@@ -10,8 +10,7 @@
 
     <title>@yield('title', 'MecxiHub - Tu auto, en las mejores manos')</title>
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
 
@@ -20,27 +19,6 @@
 
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
-
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0d4cd3">
-
-    <!-- Configuración personalizada de Tailwind -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            blue: '#0d4cd3',
-                            darkblue: '#083396',
-                            orange: '#ff6b00',
-                            lightbg: '#f4f6fa'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
 
     {{-- Para estilos específicos de la página si fuesen necesarios --}}
     @stack('styles')
@@ -61,11 +39,20 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                    console.log('ServiceWorker registrado con éxito:', registration.scope);
-                }, function(err) {
-                    console.log('Fallo al registrar ServiceWorker:', err);
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                    registrations.forEach(function (registration) {
+                        registration.unregister();
+                    });
+                });
+                caches.keys().then(function (cacheNames) {
+                    cacheNames
+                        .filter(function (cacheName) {
+                            return cacheName.startsWith('offline-cache-');
+                        })
+                        .forEach(function (cacheName) {
+                            caches.delete(cacheName);
+                        });
                 });
             });
         }

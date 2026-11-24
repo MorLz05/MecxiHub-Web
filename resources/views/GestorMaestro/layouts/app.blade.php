@@ -7,23 +7,7 @@
     <title>@yield('title', 'Panel Gestor - MecxiHub')</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            blue: '#0039A6',
-                            darkblue: '#002677',
-                            orange: '#FF6B00',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
         /* Sidebar scrollbar fino */
